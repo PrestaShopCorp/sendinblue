@@ -32,8 +32,9 @@ if (!class_exists('Customer'))
 
 if (version_compare(_PS_VERSION_, '1.4.5', '<'))
 {
-	if ((!empty($_REQUEST['configure']) && $_REQUEST['configure'] == 'sendinblue') || strpos($_SERVER['REQUEST_URI'], 'authentication.php') !== false || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
-	include(dirname(__FILE__).'/config.php');
+	$sendinblueResources = new SendinblueResources();
+	if ($sendinblueResources->checkConditionOlderVersion())
+		include(dirname(__FILE__).'/config.php');
 }
 else
 include(dirname(__FILE__).'/config.php');
@@ -62,19 +63,7 @@ class Sendinblue extends Module {
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
 		$this->version = '2.1';
-		if (version_compare(_PS_VERSION_, '1.4.5', '<'))
-		{
-			if ((!empty($_REQUEST['configure']) && $_REQUEST['configure'] == 'sendinblue') || strpos($_SERVER['REQUEST_URI'], 'authentication.php') !== false || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
-			{
-			$pathconfig = new Pathfindsendinblue();
-			$this->path = $pathconfig->pathdisp();
-			}
-		}
-		else
-		{
-			$pathconfig = new Pathfindsendinblue();
-			$this->path = $pathconfig->pathdisp();
-		}
+
 		parent::__construct();
 
 		$this->page = basename(__FILE__, '.php');
@@ -86,6 +75,27 @@ class Sendinblue extends Module {
 
 		$this->langid = $this->context->language->id;
 		$this->lang_cookie = $this->context->cookie;
+		if (version_compare(_PS_VERSION_, '1.4.5', '<'))
+		{
+			$sendinblueResources = new SendinblueResources();
+			if ($sendinblueResources->checkConditionOlderVersion())
+			{
+			$pathconfig = new Pathfindsendinblue();
+			$this->path = $pathconfig->pathdisp();
+
+			//Call the callhookRegister method to send an email to the SendinBlue user
+			//when someone registers.
+			$this->callhookRegister();
+			}
+		}
+		else
+		{
+			$pathconfig = new Pathfindsendinblue();
+			$this->path = $pathconfig->pathdisp();
+			//Call the callhookRegister method to send an email to the SendinBlue user
+			//when someone registers.
+			$this->callhookRegister();
+		}
 		// Checking Extension
 		if (!extension_loaded('curl') || !ini_get('allow_url_fopen'))
 		{
@@ -100,15 +110,7 @@ class Sendinblue extends Module {
 			$this->cl_version = 'ver_5';
 			else
 			$this->cl_version = 'ver_4';
-		//Call the callhookRegister method to send an email to the SendinBlue user
-		//when someone registers.
-		if (version_compare(_PS_VERSION_, '1.4.5', '<'))
-		{
-			if ((!empty($_REQUEST['configure']) && $_REQUEST['configure'] == 'sendinblue') || strpos($_SERVER['REQUEST_URI'], 'authentication.php') !== false || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
-			$this->callhookRegister();
-		}
-		else
-		$this->callhookRegister();
+
 
 	}
 
@@ -778,7 +780,8 @@ class Sendinblue extends Module {
 		$key_value = array();
 		$key_value[] = 'EMAIL,CIV,NAME,SURNAME,BIRTHDAY,CLIENT,SMS';
 
-		fputcsv($handle, $key_value);
+		foreach($key_value as $linedata)
+		fwrite($handle, $linedata."\n");
 
 		$value_langauge = $this->getApiConfigValue();
 
@@ -3409,5 +3412,20 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 		if ($value_template_id != '')
 			Configuration::updateValue('Sendin_Template_Id', $value_template_id);
+	}
+}
+
+class SendinblueResources
+{
+	/**
+	* check condition for less then 1.4.5 version.
+	*/
+	public function checkConditionOlderVersion()
+	{
+		$configure = Tools::getValue('configure');
+		if ((!empty($configure) && $configure == 'sendinblue') || strpos($_SERVER['REQUEST_URI'], 'authentication.php') !== false || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
+			return true;
+		else
+			return false;
 	}
 }
