@@ -24,22 +24,10 @@
 * International Registered Trademark & Property of PrestaShop SA
 */
 
-include(dirname(__FILE__).'/../../config/config.inc.php');
-include(dirname(__FILE__).'/../../init.php');
-include(dirname(__FILE__).'/sendinblue.php');
-
-if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME')))
-die('Error: Invalid Token');
-$sendin = new Sendinblue();
-if ($sendin->getSmsCredit() <= Configuration::get('Sendin_Notify_Value') && Configuration::get('Sendin_Api_Sms_Credit') == 1)
-{
-	if (Configuration::get('Sendin_Notify_Cron_Executed') == 0)
-	{
-		$id_lang = Tools::getValue('lang');
-		$sendin->sendNotifySms(Configuration::get('Sendin_Notify_Email'), $id_lang);
-		Configuration::updateValue('Sendin_Notify_Cron_Executed', 1);
-	}
-}
-else
-	Configuration::updateValue('Sendin_Notify_Cron_Executed', 0);
-	echo 'Cron executed successfully';
+header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
+header('Cache-Control: no-store, no-cache, must-revalidate');
+header('Cache-Control: post-check=0, pre-check=0', false);
+header('Pragma: no-cache');
+header('Location: ../');
+exit;

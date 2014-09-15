@@ -39,10 +39,15 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 	$key_value = array();
 	$key_value[] = 'EMAIL,ORDER_ID,ORDER_PRICE,ORDER_DATE';
 
-	fputcsv($handle, $key_value);
+	foreach($key_value as $linedata)
+	fwrite($handle, $linedata."\n");
 	$customer_detail = $sendin->getAllCustomers();
 	foreach ($customer_detail as $customer_value)
 	{
+		$orders = Order::getCustomerOrders($customer_value['id_customer']);
+		if (count($orders) > 0)
+		{
+
 		$data = array();
 		$data['key'] = Configuration::get('Sendin_Api_Key');
 		$data['webaction'] = 'USERS-STATUS';
@@ -52,8 +57,6 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 
 		if ($user_status['result'] != '')
 		{
-			$orders = Order::getCustomerOrders($customer_value['id_customer']);
-
 			foreach ($orders as $orders_data)
 			{
 				if (version_compare(_PS_VERSION_, '1.5', '>='))
@@ -71,10 +74,12 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 
 				$order_data = array();
 				$order_data[] = array($customer_value['email'],$order_id,$order_price,$date);
+
 				foreach ($order_data as $line)
 				fputcsv($handle, $line);
 
 			}
+		}
 		}
 	}
 	fclose($handle);
