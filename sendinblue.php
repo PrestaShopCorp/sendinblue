@@ -62,7 +62,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.1';
+		$this->version = '2.1.1';
 
 		parent::__construct();
 
@@ -253,7 +253,7 @@ class Sendinblue extends Module {
 			$customer_data = $this->getCustomersByEmail($this->context->cookie->email);
 
 			// Check if client have records in customer table
-			if (count($customer_data) > 0 && !empty($customer_data[0]['id_customer']))
+			if (isset($customer_data) && count($customer_data) > 0 && !empty($customer_data[0]['id_customer']))
 			{
 				$this->newsletter = !empty($customer_data[0]['newsletter'])?$customer_data[0]['newsletter'] : '';
 				$this->email = !empty($customer_data[0]['email'])?$customer_data[0]['email'] : '';
@@ -427,12 +427,12 @@ class Sendinblue extends Module {
 	{
 		return Db::getInstance()->ExecuteS('
 			SELECT C.email, C.newsletter AS newsletter, '._DB_PREFIX_.'country.call_prefix, PSA.phone_mobile, C.id_customer, PSA.date_upd
-				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN 
+				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
 				(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
-				LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country = PSA.id_country              
+				LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country = PSA.id_country
 				GROUP BY C.id_customer
 				UNION
-				(SELECT A.email, A.active AS newsletter, NULL AS call_prefix, 
+				(SELECT A.email, A.active AS newsletter, NULL AS call_prefix,
 				NULL AS phone_mobile, "Nclient" AS id_customer, NULL AS date_upd
 				FROM '._DB_PREFIX_.'sendin_newsletter AS A)  LIMIT '.(int)$start.','.(int)$page);
 	}
@@ -502,7 +502,7 @@ class Sendinblue extends Module {
 												WHERE email = "'.pSQL($this->email).'"');
 			Db::getInstance()->Execute('UPDATE `'._DB_PREFIX_.'customer`
 												SET newsletter="'.pSQL($status).'",
-												newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'" 
+												newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'"
 												WHERE email = "'.pSQL($this->email).'"');
 		}
 	}
@@ -758,11 +758,11 @@ class Sendinblue extends Module {
 				{
 					$result = Db::getInstance()->Execute('UPDATE  `'._DB_PREFIX_.'customer`
 						SET newsletter="'.pSQL($value['blacklisted']).'",
-						newsletter_date_add = "'.pSQL($value['modified']).'" 
+						newsletter_date_add = "'.pSQL($value['modified']).'"
 						WHERE email = "'.pSQL($value['email']).'" ');
 					$result = Db::getInstance()->Execute('UPDATE  `'._DB_PREFIX_.'sendin_newsletter`
 						SET active="'.pSQL($value['blacklisted']).'",
-						newsletter_date_add = "'.pSQL($value['modified']).'" 
+						newsletter_date_add = "'.pSQL($value['modified']).'"
 						WHERE email = "'.pSQL($value['email']).'" ');
 				} // end foreach
 			} // end foreach
@@ -797,10 +797,10 @@ class Sendinblue extends Module {
 		// select only newly added users and registered user
 		$register_result = Db::getInstance()->ExecuteS('
 		SELECT  C.id_customer, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
-		FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN 
+		FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
 		(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
 		LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country =  PSA.id_country
-		WHERE C.newsletter=1 
+		WHERE C.newsletter=1
 		GROUP BY C.id_customer limit '.$start.','.$end.'');
 
 		if ($register_result)
@@ -1702,7 +1702,7 @@ class Sendinblue extends Module {
 	}
 
 	/**
-	* Fetches the SMTP status details for send test mail 
+	* Fetches the SMTP status details for send test mail
 	*/
 	public function realTimeSmtpResult()
 	{
@@ -2165,7 +2165,7 @@ class Sendinblue extends Module {
 			</label><span class="'.$this->cl_version.'">
 			<input type="radio" class="ordertracking script radio_nospaceing" id="yesradio" name="script" value="1"
 			'.(Configuration::get('Sendin_Tracking_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
-			<input type="radio" class="ordertracking script radio_spaceing2" id="noradio" 
+			<input type="radio" class="ordertracking script radio_spaceing2" id="noradio"
 			name="script" value="0" '.(! Configuration::get('Sendin_Tracking_Status') ? 'checked="checked" ' : '').'/>'
 			.$this->l('No').'
 			<span class="toolTip"
@@ -2183,7 +2183,7 @@ class Sendinblue extends Module {
 		<div id="div_order_track">
 		<input type ="hidden" name="importmsg" id="importmsg" value="'.$this->l('Order history has been import successfully').'">
 		<p style="text-align:center">'.'<a href="javascript:void(0);" id="importOrderTrack" class="button">
-			'.$this->l('Import the data of previous orders').'</a>                            
+			'.$this->l('Import the data of previous orders').'</a>
 		</div>
 		</td></tr></form></table>';
 		return $this->html_code_tracking;
@@ -2442,7 +2442,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$this->_html .= '<legend>
 		<img src="'.$this->_path.'logo.gif" />'.$this->l('Settings').'</legend>
 		<label>'.$this->l('Activate the SendinBlue module').'</label><div class="margin-form" style="padding-top:5px">
-		<input type="radio" id="y" class="keyyes radio_spaceing" 
+		<input type="radio" id="y" class="keyyes radio_spaceing"
 		 name="status" value="1"
 		'.(Configuration::get('Sendin_Api_Key_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
 		<input type="radio"  id="n" class="keyyes radio_spaceing2"
@@ -3118,7 +3118,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 				var nbBaseURL = "http://tracking.mailin.fr/";
 				loadScript(nbJsURL+"/nbv2.js",
 				function(){
-				/*You can put your custom variables here as shown in example.*/					
+				/*You can put your custom variables here as shown in example.*/
 				try {
 				var nbTracker = nb.getTracker(nbBaseURL , "'.Tools::safeOutput($this->tracking->result->tracking_data->site_id).'");
 				var list = ['.$list.'];
@@ -3296,10 +3296,10 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		// select only newly added users and registered user
 		$register_result = Db::getInstance()->ExecuteS('
 			SELECT  C.id_customer, C.newsletter, C.newsletter_date_add, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
-				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN 
+				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
 				(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
 				LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country =  PSA.id_country
-				WHERE C.newsletter_date_add > 0 
+				WHERE C.newsletter_date_add > 0
 				GROUP BY C.id_customer');
 
 		$value_langauge = $this->getApiConfigValue();
