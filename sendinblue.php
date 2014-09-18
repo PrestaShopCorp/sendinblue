@@ -50,6 +50,7 @@ class Sendinblue extends Module {
 	private $first_name;
 
 	public $error;
+	public $_html = null;
 
 	/**
 	* class constructor
@@ -62,7 +63,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.1.1';
+		$this->version = '2.1.2';
 
 		parent::__construct();
 
