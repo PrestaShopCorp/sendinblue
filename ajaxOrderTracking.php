@@ -39,7 +39,7 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 	$key_value = array();
 	$key_value[] = 'EMAIL,ORDER_ID,ORDER_PRICE,ORDER_DATE';
 
-	foreach($key_value as $linedata)
+	foreach ($key_value as $linedata)
 	fwrite($handle, $linedata."\n");
 	$customer_detail = $sendin->getAllCustomers();
 	foreach ($customer_detail as $customer_value)

@@ -44,6 +44,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_a5da3ccf6b1c7ba6a55dda6bc0d20767'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_7c45879beee43e8b1ce73aa6d0e484d4'] = 'Proszę uzupełnić pole wiadomości';
 $_MODULE['<{sendinblue}prestashop>sendinblue_70179f72c2ee7aadca0b6f29cfe93ba7'] = 'Twoja wiadomość została wysłana';
 $_MODULE['<{sendinblue}prestashop>sendinblue_7b07d4b6a99b44013a48d1ad5a73c4c3'] = 'Twoja wiadomość nie mogła zostać wysłana';
+$_MODULE['<{sendinblue}prestashop>sendinblue_1d2a24069e090fabc79520875ffe0440'] = 'Old subscribers not imported successfully, please click on Import Old Subscribers button to import them again';
 $_MODULE['<{sendinblue}prestashop>sendinblue_112a2dd564239a5c764070edad2235dc'] = 'Aktualizacja zakończona powodzeniem';
 $_MODULE['<{sendinblue}prestashop>sendinblue_52ac278c82fd84881c564c27b95e511a'] = 'E-mail testowy [SendinBlue SMTP]';
 $_MODULE['<{sendinblue}prestashop>sendinblue_8f10b2c5e527496bb1714a3bb61ef0fc'] = 'Wiadomość wysłana';
@@ -104,6 +105,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_f4f70727dc34561dfde1a3c529b6205c'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_495a3b3985cc02dbf7b4111b4e913d8a'] = 'Aktywuj moduł SendinBlue';
 $_MODULE['<{sendinblue}prestashop>sendinblue_656a6828d7ef1bb791e42087c4b5ee6e'] = 'Klucz API';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ab07708173b94fb02480c589572ded63'] = 'Proszę wpisać klucz API dla swojego konta SendinBlue, a jeśli jeszcze go nie masz, odwiedź www.sendinblue.com i uruchom subskrypcję. Klucz API można otrzymać na stronie ';
+$_MODULE['<{sendinblue}prestashop>sendinblue_11af2f30bc4f0c405c00d14a359fa061'] = 'Import Old Subscribers';
 $_MODULE['<{sendinblue}prestashop>sendinblue_6e659c47c94d1e1dc7121859f43fb2b0'] = 'Niepoprawny adres e-mail';
 $_MODULE['<{sendinblue}prestashop>sendinblue_b538427eef71d92ea64669eaa7957240'] = 'Wpisany adres e-mail nie istnieje w naszej bazie danych';
 $_MODULE['<{sendinblue}prestashop>sendinblue_3b2c452f8894cf644d24cca8d1bb7a6e'] = 'Adres e-mail został już usunięty z subskrypcji';
