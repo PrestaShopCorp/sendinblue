@@ -3475,8 +3475,6 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 		curl_setopt ($ch, CURLOPT_POSTFIELDS, $post_data);
 
-		curl_setopt ($ch, CURLOPT_FOLLOWLOCATION, 1);
-
 		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$return_data = curl_exec ($ch);
