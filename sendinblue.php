@@ -153,6 +153,7 @@ class Sendinblue extends Module {
 			$this->id_gender = Tools::getValue('id_gender');
 			$this->first_name = Tools::getValue('firstname');
 			$this->last_name = Tools::getValue('lastname');
+			$this->id_lang = $this->context->cookie->id_lang;
 			$this->days = Tools::getValue('days');
 			$this->months = Tools::getValue('months');
 			$this->years = Tools::getValue('years');
@@ -214,7 +215,7 @@ class Sendinblue extends Module {
 						$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
 					}
 					// Code to update sendinblue with logged in user data.
-					$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, '', $phone_mobile, $this->newsletter);
+					$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
 					$this->sendWsTemplateMail($this->email);
 				}
 			}
