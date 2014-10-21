@@ -81,7 +81,7 @@ class Sendinblue extends Module {
 			if ($sendinblue_resources->checkConditionOlderVersion() === true)
 			{
 			$pathconfig = new Pathfindsendinblue();
-			$this->path = $pathconfig->pathdisp();
+			$this->local_path = $pathconfig->pathdisp();
 			//Call the callhookRegister method to send an email to the SendinBlue user
 			//when someone registers.
 			$this->callhookRegister();
@@ -90,7 +90,7 @@ class Sendinblue extends Module {
 		else
 		{
 			$pathconfig = new Pathfindsendinblue();
-			$this->path = $pathconfig->pathdisp();
+			$this->local_path = $pathconfig->pathdisp();
 			//Call the callhookRegister method to send an email to the SendinBlue user
 			//when someone registers.
 			$this->callhookRegister();
@@ -1466,9 +1466,9 @@ class Sendinblue extends Module {
 			$data = array();
 			$data['webaction'] = 'IMPORTUSERS';
 			$data['key'] = Configuration::get('Sendin_Api_Key');
-			$data['url'] = $this->path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+			$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
 			$data['listids'] = Configuration::get('Sendin_Selected_List_Data');
-			$data['notify_url'] = $this->path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+			$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
 			// List id should be optional
 			$responce_data = $this->curlRequestAsyc($data);
 			$res_value = Tools::jsonDecode($responce_data);
@@ -1881,9 +1881,9 @@ class Sendinblue extends Module {
 			$this->autoSubscribeAfterInstallation();
 			$data['webaction'] = 'IMPORTUSERS';
 			$data['key'] = $key;
-			$data['url'] = $this->path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+			$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
 			$data['listids'] = $list_id;
-			$data['notify_url'] = $this->path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+			$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
 			// List id should be optional
 			Configuration::updateValue('Sendin_Selected_List_Data', trim($list_id));
 			$response_data = $this->curlRequestAsyc($data);
@@ -1911,9 +1911,9 @@ class Sendinblue extends Module {
 			$this->autoSubscribeAfterInstallation();
 			$data['webaction'] = 'IMPORTUSERS';
 			$data['key'] = $key;
-			$data['url'] = $this->path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+			$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
 			$data['listids'] = $list_id; // List id should be optional
-			$data['notify_url'] = $this->path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+			$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
 			Configuration::updateValue('Sendin_Selected_List_Data', trim($list_id));
 			$response_data = $this->curlRequestAsyc($data);
 			$res_value = Tools::jsonDecode($response_data);
@@ -2052,9 +2052,9 @@ class Sendinblue extends Module {
 		$data = array();
 		$data['webaction'] = 'IMPORTUSERS';
 		$data['key'] = $key;
-		$data['url'] = $this->path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+		$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
 		$data['listids'] = $list_id; // List id should be optional
-		$data['notify_url'] = $this->path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+		$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
 		Configuration::updateValue('Sendin_Selected_List_Data', trim($list_id));
 		$response_data = $this->curlRequestAsyc($data);
 		$res_value = Tools::jsonDecode($response_data);
@@ -2370,7 +2370,7 @@ class Sendinblue extends Module {
 				$data .= '<input type="submit" name="submitUpdateImport" value="'.$this->l('Import Old Subscribers').'" class="button" />&nbsp;</form>';
 			$this->_second_block_code .= $data.'</td>
 			</tr><tr class="managesubscribeBlock" ><td colspan="3" class="'.$this->cl_version.'">'.$this->l('To synchronize the emails of your customers from SendinBlue platform to your e-commerce website, you should run').'
-			<a target="_blank" href="'.$this->path.'sendinblue/cron.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">
+			<a target="_blank" href="'.$this->local_path.'sendinblue/cron.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">
 			'.$this->l('this link').'</a> ';
 			$this->_second_block_code .= $this->l('each day.').'
 			<span class="toolTip" title="'.$this->l('Note that if you change the name of your Shop (currently ').Configuration::get('PS_SHOP_NAME').$this->l(') the token value changes.').'">&nbsp;</span></td></tr></table>';
@@ -2431,7 +2431,7 @@ class Sendinblue extends Module {
 	public function mailSendBySms()
 	{
 		$this->context->smarty->assign('site_name', Configuration::get('PS_SHOP_NAME'));
-		$this->context->smarty->assign('link', '<a target="_blank" href="'.$this->path.'sendinblue/smsnotifycron.php?lang='.
+		$this->context->smarty->assign('link', '<a target="_blank" href="'.$this->local_path.'sendinblue/smsnotifycron.php?lang='.
 		$this->context->language->id.'&token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">'.$this->l('this link').'</a>');
 		$this->context->smarty->assign('current_credits_sms', $this->getSmsCredit());
 		$this->context->smarty->assign('sms_campaign_status', Configuration::get('Sendin_Api_Sms_Campaign_Status'));
@@ -2465,7 +2465,7 @@ class Sendinblue extends Module {
 
 	private function displayBankWire()
 	{
-		$this->_html .= '<img src="'.$this->path.'sendinblue/img/'.$this->l('sendinblue.png').'"
+		$this->_html .= '<img src="'.$this->local_path.'sendinblue/img/'.$this->l('sendinblue.png').'"
 		style="float:left; margin:0px 15px 30px 0px;"><div style="float:left;
 		font-weight:bold; padding:25px 0px 0px 0px; color:#268CCD;">'.
 		$this->l('SendinBlue : THE all-in-one plugin for your marketing and transactional emails.').'</div>
@@ -2479,7 +2479,7 @@ class Sendinblue extends Module {
 		$this->_html .= '<div class="module_error alert error">'.$this->l('We notified that you are using the previous version of our plugin, please uninstall it / remove it and keep only the latest version of SendinBlue').'</div>';
 		$this->_html .= '
 		<fieldset>
-		<legend><img src="'.$this->path.$this->name.'/logo.gif" alt="" /> '.$this->l('SendinBlue').'</legend>
+		<legend><img src="'.$this->local_path.$this->name.'/logo.gif" alt="" /> '.$this->l('SendinBlue').'</legend>
 		<div style="float: right; width: 340px; height: 205px; border: dashed 1px #666; padding: 8px; margin-left: 12px; margin-top:-15px;">
 		<h2 style="color:#268CCD;">'.$this->l('Contact SendinBlue Team').'</h2>
 		<div style="clear: both;"></div>
@@ -2522,7 +2522,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 		$this->_html .= '<p style="margin:1.5em 0;">'.$this->displaySendin().'</p>';
 		$this->_html .= '<style>.margin-form{padding: 0 0 2em 210px;}</style><fieldset style="margin-bottom:10px;">
-		<legend><img src="'.$this->path.$this->name.'/logo.gif" alt="" />'.$this->l('Prerequisites').'</legend>';
+		<legend><img src="'.$this->local_path.$this->name.'/logo.gif" alt="" />'.$this->l('Prerequisites').'</legend>';
 		$this->_html .= '<label">-
 		'.$this->l('You should have a SendinBlue account. You can create a free account here : ').
 		'<a href="'.$this->l('https://www.sendinblue.com').'" class="link_action" style="color:#268CCD;"  target="_blank">&nbsp;'.$this->l('https://www.sendinblue.com').'</a></label><br />';
@@ -3106,12 +3106,12 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$so = $this->l('Select option');
 		$selected = $this->l('selected');
 		$html = '<script>  var selectoption = "'.$so.'"; </script>';
-		$html .= '<script>  var base_url = "'.str_replace('modules/', '', $this->path).'"; </script>';
+		$html .= '<script>  var base_url = "'.str_replace('modules/', '', $this->local_path).'"; </script>';
 		$html .= '<script>  var selected = "'.$selected.'"; </script>';
-		$sendin_js_path = $this->path.$this->name.'/js/'.$this->name.$min.'.js?_='.time();
-		$js_ddl_list = $this->path.$this->name.'/js/jquery.multiselect.min.js';
-		$liveclickquery = $this->path.$this->name.'/js/jquery.livequery.min.js';
-		$s_css = $this->path.$this->name.'/css/'.$this->name.'.css?_='.time();
+		$sendin_js_path = $this->local_path.$this->name.'/js/'.$this->name.$min.'.js?_='.time();
+		$js_ddl_list = $this->local_path.$this->name.'/js/jquery.multiselect.min.js';
+		$liveclickquery = $this->local_path.$this->name.'/js/jquery.livequery.min.js';
+		$s_css = $this->local_path.$this->name.'/css/'.$this->name.'.css?_='.time();
 
 		$base = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://');
 
