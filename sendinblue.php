@@ -1848,8 +1848,8 @@ class Sendinblue extends Module {
 			return false;
 		$param = array();
 		$data = array();
-		$folder_id = $result[0];
-		$exist_list = $result[2];
+		$folder_id = !empty($result[0]) ? $result[0] : '';
+		$exist_list = !empty($result[2]) ? $result[2] : '';
 
 		if (!empty($key))
 		{
