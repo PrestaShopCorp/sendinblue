@@ -245,6 +245,16 @@ class Sendinblue extends Module {
 		if (isset($this->newsletter) && $this->newsletter == 1)
 		$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $birthday, $this->id_lang, $phone_mobile, $this->newsletter);
 		$this->sendWsTemplateMail($this->email);
+		if (Configuration::get('Sendin_Api_Key_Status') == 1)
+			$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
+					'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+			$email_id = (isset($result_id['id'])?$result_id['id']:'0');
+			if ($email_id > 0)
+			{
+				Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+				if ($this->newsletter == 0)
+					$this->unsubscribeByruntime($this->context->cookie->email);
+			}
 		}
 		elseif (Tools::getValue('email') != '')
 		{
@@ -267,11 +277,11 @@ class Sendinblue extends Module {
 
 				if (Configuration::get('Sendin_Api_Key_Status') == 1)
 					$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
-							'sendin_newsletter WHERE `email` = \''.$this->context->cookie->email.'\'');
+							'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
 					$email_id = (isset($result_id['id'])?$result_id['id']:'0');
 					if ($email_id > 0)
 					{
-						Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.$this->context->cookie->email.'\'');
+						Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
 						if ($this->newsletter == 0)
 							$this->unsubscribeByruntime($this->context->cookie->email);
 					}
@@ -860,7 +870,7 @@ class Sendinblue extends Module {
 			$langisocode = Language::getIsoById( (int)$register_row['id_lang']);
 			else
 			$langisocode = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
-				WHERE `id_lang` = \''.$register_row['id_lang'].'\'');
+				WHERE `id_lang` = \''.(int)$register_row['id_lang'].'\'');
 
 		if ($value_langauge->language == 'fr')
 			$register_email[] = array(
@@ -2151,7 +2161,7 @@ class Sendinblue extends Module {
 			$iso_code = Language::getIsoById( (int)$customer_data[0]['id_lang']);
 			else
 			$iso_code = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
-				WHERE `id_lang` = \''.$customer_data[0]['id_lang'].'\'');
+				WHERE `id_lang` = \''.(int)$customer_data[0]['id_lang'].'\'');
 
 			$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$birthday.'|'.$client;
 		}
@@ -2207,7 +2217,7 @@ class Sendinblue extends Module {
 				$langisocode = Language::getIsoById( (int)$langisocode);
 				else
 				$langisocode = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
-					WHERE `id_lang` = \''.$langisocode.'\'');
+					WHERE `id_lang` = \''.(int)$langisocode.'\'');
 		}
 
 		$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$dateof_birth.'|'.$langisocode.'|'.$client.'|'.$phone_mobile;
