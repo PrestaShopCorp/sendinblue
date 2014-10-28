@@ -29,6 +29,13 @@ exit();
 
 if (!class_exists('Customer'))
 	include_once(_PS_CLASS_DIR_.'/../classes/Customer.php');
+if (version_compare(_PS_VERSION_, '1.4.5', '<'))
+{
+	$sendinblue_resources = new SendinblueResources();
+	if ($sendinblue_resources->checkConditionOlderVersion())
+		include(dirname(__FILE__).'/config.php');
+}
+else
 include(dirname(__FILE__).'/config.php');
 
 class Sendinblue extends Module {
@@ -42,6 +49,7 @@ class Sendinblue extends Module {
 	private $first_name;
 
 	public $error;
+	public $_html = null;
 
 	/**
 	* class constructor
@@ -54,9 +62,8 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.0';
-		$pathconfig = new Pathfindsendinblue();
-		$this->path = $pathconfig->pathdisp();
+		$this->version = '2.1.3';
+
 		parent::__construct();
 
 		$this->page = basename(__FILE__, '.php');
@@ -64,11 +71,30 @@ class Sendinblue extends Module {
 		$this->description = $this->l('Synchronize your PrestaShop contacts with SendinBlue platform & easily send your marketing and transactional emails and SMS');
 		$this->confirmUninstall = $this->l('Are you sure you want to remove the SendinBlue module? N.B: we will enable php mail() send function (If you were using SMTP info before using SendinBlue SMTP, please update your configuration for the emails)');
 
-		if (!class_exists('Context'))
-			require(_PS_MODULE_DIR_.$this->name.'/backward_compatibility/backward.php');
+		require(_PS_MODULE_DIR_.$this->name.'/backward_compatibility/backward.php');
 
 		$this->langid = $this->context->language->id;
 		$this->lang_cookie = $this->context->cookie;
+		if (version_compare(_PS_VERSION_, '1.4.5', '<'))
+		{
+			$sendinblue_resources = new SendinblueResources();
+			if ($sendinblue_resources->checkConditionOlderVersion() === true)
+			{
+			$pathconfig = new Pathfindsendinblue();
+			$this->local_path = $pathconfig->pathdisp();
+			//Call the callhookRegister method to send an email to the SendinBlue user
+			//when someone registers.
+			$this->callhookRegister();
+			}
+		}
+		else
+		{
+			$pathconfig = new Pathfindsendinblue();
+			$this->local_path = $pathconfig->pathdisp();
+			//Call the callhookRegister method to send an email to the SendinBlue user
+			//when someone registers.
+			$this->callhookRegister();
+		}
 		// Checking Extension
 		if (!extension_loaded('curl') || !ini_get('allow_url_fopen'))
 		{
@@ -83,9 +109,6 @@ class Sendinblue extends Module {
 			$this->cl_version = 'ver_5';
 			else
 			$this->cl_version = 'ver_4';
-		//Call the callhookRegister method to send an email to the SendinBlue user
-		//when someone registers.
-		$this->callhookRegister();
 
 	}
 
@@ -130,6 +153,7 @@ class Sendinblue extends Module {
 			$this->id_gender = Tools::getValue('id_gender');
 			$this->first_name = Tools::getValue('firstname');
 			$this->last_name = Tools::getValue('lastname');
+			$this->id_lang = $this->context->cookie->id_lang;
 			$this->days = Tools::getValue('days');
 			$this->months = Tools::getValue('months');
 			$this->years = Tools::getValue('years');
@@ -138,17 +162,17 @@ class Sendinblue extends Module {
 
 			$customer_data = $this->getCustomersByEmail($this->email);
 			// Check if client have records in customer table
-			if (count($customer_data) > 0 && !empty($customer_data[0]['id_customer']))
+			if (isset($customer_data) && count($customer_data) > 0 && !empty($customer_data[0]['id_customer']))
 			{
-				$this->newsletter = !empty($customer_data[0]['newsletter'])?$customer_data[0]['newsletter'] : '';
-				$this->email = !empty($customer_data[0]['email'])?$customer_data[0]['email'] : '';
-				$this->id_gender = !empty($customer_data[0]['id_gender'])?$customer_data[0]['id_gender'] : '';
-				$this->first_name = !empty($customer_data[0]['firstname'])?$customer_data[0]['firstname'] : '';
-				$this->last_name = !empty($customer_data[0]['lastname'])?$customer_data[0]['lastname'] : '';
-				$this->birthday = !empty($customer_data[0]['birthday'])?$customer_data[0]['birthday'] : '';
+				$newsletter_status = !empty($this->newsletter)?$this->newsletter : $customer_data[0]['newsletter'];
+				$this->email = !empty($this->email)?$this->email : $customer_data[0]['email'];
+				$this->id_gender = !empty($this->id_gender)?$this->id_gender : $customer_data[0]['id_gender'];
+				$this->first_name = !empty($this->first_name)?$this->first_name : $customer_data[0]['firstname'];
+				$this->last_name = !empty($this->last_name)?$this->last_name : $customer_data[0]['lastname'];
+				$this->birthday = (!empty($this->years) && !empty($this->months) && !empty($this->days))?$birthday : $customer_data[0]['birthday'];
 
 				// If logged in user register with newsletter
-				if (isset($this->newsletter) && $this->newsletter == 1)
+				if (isset($newsletter_status) && $newsletter_status == 1)
 				{
 					$id_customer = $customer_data[0]['id_customer'];
 					$customer = new CustomerCore((int)$id_customer);
@@ -191,7 +215,7 @@ class Sendinblue extends Module {
 						$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
 					}
 					// Code to update sendinblue with logged in user data.
-					$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $phone_mobile);
+					$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
 					$this->sendWsTemplateMail($this->email);
 				}
 			}
@@ -205,6 +229,7 @@ class Sendinblue extends Module {
 		$this->id_gender = Tools::getValue('id_gender');
 		$this->first_name = Tools::getValue('customer_firstname');
 		$this->last_name = Tools::getValue('customer_lastname');
+		$this->id_lang = $this->context->cookie->id_lang;
 		$this->days = Tools::getValue('days');
 		$this->months = Tools::getValue('months');
 		$this->years = Tools::getValue('years');
@@ -218,26 +243,69 @@ class Sendinblue extends Module {
 				$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
 
 		if (isset($this->newsletter) && $this->newsletter == 1)
-		$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $birthday, $phone_mobile);
+		$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $birthday, $this->id_lang, $phone_mobile, $this->newsletter);
 		$this->sendWsTemplateMail($this->email);
+		if (Configuration::get('Sendin_Api_Key_Status') == 1)
+			$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
+					'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+			$email_id = (isset($result_id['id'])?$result_id['id']:'0');
+			if ($email_id > 0)
+			{
+				Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+				if ($this->newsletter == 0)
+					$this->unsubscribeByruntime($this->context->cookie->email);
+			}
 		}
-		else
+		elseif (Tools::getValue('email') != '')
 		{
 			// Load customer data for logged in user so that we can register his/her with sendinblue
+			if (!empty($this->context->cookie->email))
 			$customer_data = $this->getCustomersByEmail($this->context->cookie->email);
 
 			// Check if client have records in customer table
-			if (count($customer_data) > 0 && !empty($customer_data[0]['id_customer']))
+			if (!empty($customer_data[0]['id_customer']) && count($customer_data) > 0)
 			{
-				$this->newsletter = !empty($customer_data[0]['newsletter'])?$customer_data[0]['newsletter'] : '';
+				$newsletter_status = !empty($this->newsletter)?$this->newsletter : $customer_data[0]['newsletter'];
+				$this->email = !empty($this->email)?$this->email : $customer_data[0]['email'];
+				$this->id_gender = !empty($this->id_gender)?$this->id_gender : $customer_data[0]['id_gender'];
+				$this->first_name = !empty($this->first_name)?$this->first_name : $customer_data[0]['firstname'];
+				$this->last_name = !empty($this->last_name)?$this->last_name : $customer_data[0]['lastname'];
+				$this->id_lang = !empty($this->id_lang)?$this->id_lang : $customer_data[0]['id_lang'];
+				$this->birthday = (!empty($this->years) && !empty($this->months) && !empty($this->days))?$birthday : $customer_data[0]['birthday'];
+				if ($newsletter_status == 1)
+				$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
+
+				if (Configuration::get('Sendin_Api_Key_Status') == 1)
+					$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
+							'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+					$email_id = (isset($result_id['id'])?$result_id['id']:'0');
+					if ($email_id > 0)
+					{
+						Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+						if ($this->newsletter == 0)
+							$this->unsubscribeByruntime($this->context->cookie->email);
+					}
+			}
+		}
+		elseif (Tools::getValue('phone_mobile') != '' || Tools::getValue('controller') == 'addresses' || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
+		{
+			// Load customer data for logged in user so that we can register his/her with sendinblue
+			if (!empty($this->context->cookie->email))
+			$customer_data = $this->getCustomersByEmail($this->context->cookie->email);
+
+			// Check if client have records in customer table
+			if (!empty($customer_data[0]['id_customer']) && count($customer_data) > 0)
+			{
+				$newsletter_status = !empty($customer_data[0]['newsletter'])?$customer_data[0]['newsletter'] : '';
 				$this->email = !empty($customer_data[0]['email'])?$customer_data[0]['email'] : '';
 				$this->id_gender = !empty($customer_data[0]['id_gender'])?$customer_data[0]['id_gender'] : '';
 				$this->first_name = !empty($customer_data[0]['firstname'])?$customer_data[0]['firstname'] : '';
 				$this->last_name = !empty($customer_data[0]['lastname'])?$customer_data[0]['lastname'] : '';
+				$this->id_lang = !empty($customer_data[0]['id_lang'])?$customer_data[0]['id_lang'] : '';
 				$this->birthday = !empty($customer_data[0]['birthday'])?$customer_data[0]['birthday'] : '';
 
 				// If logged in user register with newsletter
-				if (isset($this->newsletter) && $this->newsletter == 1)
+				if (isset($newsletter_status) && $newsletter_status == 1)
 				{
 					$id_customer = $customer_data[0]['id_customer'];
 					$customer = new CustomerCore((int)$id_customer);
@@ -280,24 +348,14 @@ class Sendinblue extends Module {
 						$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
 					}
 					// Code to update sendinblue with logged in user data.
-					$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $phone_mobile);
+					$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
 				}
 			}
 		}
-				if (Configuration::get('Sendin_Api_Key_Status') == 1)
-				$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
-						'sendin_newsletter WHERE `email` = \''.$this->context->cookie->email.'\'');
-				$email_id = (isset($result_id['id'])?$result_id['id']:'0');
-				if ($email_id > 0)
-				{
-					Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.$this->context->cookie->email.'\'');
-					if ($this->newsletter == 0)
-						$this->unsubscribeByruntime($this->context->cookie->email);
 
-				}
 		}
+		if (!empty($this->context->language->id))
 		$this->context->cookie->sms_message_land_id = $this->context->language->id;
-		Configuration::updateValue('Sendin_Sms_Message_Land_Id', $this->context->language->id);
 	}
 
 	/**
@@ -340,7 +398,6 @@ class Sendinblue extends Module {
 			return false;
 
 			Configuration::updateValue('Sendin_Newsletter_table', 1);
-			Configuration::updateValue('Sendin_Notify_Cron_Executed', 0);
 
 			if (Db::getInstance()->Execute('
 				CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'sendin_newsletter`(
@@ -402,12 +459,12 @@ class Sendinblue extends Module {
 	{
 		return Db::getInstance()->ExecuteS('
 			SELECT C.email, C.newsletter AS newsletter, '._DB_PREFIX_.'country.call_prefix, PSA.phone_mobile, C.id_customer, PSA.date_upd
-				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN 
+				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
 				(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
-				LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country = PSA.id_country              
+				LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country = PSA.id_country
 				GROUP BY C.id_customer
 				UNION
-				(SELECT A.email, A.active AS newsletter, NULL AS call_prefix, 
+				(SELECT A.email, A.active AS newsletter, NULL AS call_prefix,
 				NULL AS phone_mobile, "Nclient" AS id_customer, NULL AS date_upd
 				FROM '._DB_PREFIX_.'sendin_newsletter AS A)  LIMIT '.(int)$start.','.(int)$page);
 	}
@@ -467,7 +524,7 @@ class Sendinblue extends Module {
 				}
 				else
 					$mobile = '';
-				$this->isEmailRegistered($this->email, $mobile);
+				$this->isEmailRegistered($this->email, $mobile, Tools::getValue('newsletter'));
 				$status = 1;
 			}
 
@@ -477,7 +534,7 @@ class Sendinblue extends Module {
 												WHERE email = "'.pSQL($this->email).'"');
 			Db::getInstance()->Execute('UPDATE `'._DB_PREFIX_.'customer`
 												SET newsletter="'.pSQL($status).'",
-												newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'" 
+												newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'"
 												WHERE email = "'.pSQL($this->email).'"');
 		}
 	}
@@ -733,11 +790,11 @@ class Sendinblue extends Module {
 				{
 					$result = Db::getInstance()->Execute('UPDATE  `'._DB_PREFIX_.'customer`
 						SET newsletter="'.pSQL($value['blacklisted']).'",
-						newsletter_date_add = "'.pSQL($value['modified']).'" 
+						newsletter_date_add = "'.pSQL($value['modified']).'"
 						WHERE email = "'.pSQL($value['email']).'" ');
 					$result = Db::getInstance()->Execute('UPDATE  `'._DB_PREFIX_.'sendin_newsletter`
 						SET active="'.pSQL($value['blacklisted']).'",
-						newsletter_date_add = "'.pSQL($value['modified']).'" 
+						newsletter_date_add = "'.pSQL($value['modified']).'"
 						WHERE email = "'.pSQL($value['email']).'" ');
 				} // end foreach
 			} // end foreach
@@ -749,15 +806,19 @@ class Sendinblue extends Module {
 	*/
 	private function autoSubscribeAfterInstallation()
 	{
+		$value_langauge = $this->getApiConfigValue();
 		$register_total = Db::getInstance()->ExecuteS('SELECT count(*) as total_val FROM '._DB_PREFIX_.'customer WHERE newsletter=1');
 
 		$handle = fopen(_PS_MODULE_DIR_.'sendinblue/csv/ImportSubUsersToSendinblue.csv', 'w+');
 		$key_value = array();
-		$key_value[] = 'EMAIL,CIV,NAME,SURNAME,BIRTHDAY,CLIENT,SMS';
 
-		fputcsv($handle, $key_value);
+		if ($value_langauge->language == 'fr')
+		$key_value[] = 'EMAIL,CIV,PRENOM,NOM,DDNAISSANCE,PS_LANG,CLIENT,SMS';
+		else
+		$key_value[] = 'EMAIL,CIV,NAME,SURNAME,BIRTHDAY,PS_LANG,CLIENT,SMS';
 
-		$value_langauge = $this->getApiConfigValue();
+		foreach ($key_value as $linedata)
+		fwrite($handle, $linedata."\n");
 
 		$start = 0;
 		$end = 2000;
@@ -770,11 +831,11 @@ class Sendinblue extends Module {
 
 		// select only newly added users and registered user
 		$register_result = Db::getInstance()->ExecuteS('
-		SELECT  C.id_customer, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
-		FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN 
+		SELECT  C.id_customer, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, C.id_lang,PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
+		FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
 		(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
 		LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country =  PSA.id_country
-		WHERE C.newsletter=1 
+		WHERE C.newsletter=1
 		GROUP BY C.id_customer limit '.$start.','.$end.'');
 
 		if ($register_result)
@@ -805,6 +866,12 @@ class Sendinblue extends Module {
 		else
 		$civility = '';
 
+		if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+			$langisocode = Language::getIsoById( (int)$register_row['id_lang']);
+			else
+			$langisocode = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
+				WHERE `id_lang` = \''.(int)$register_row['id_lang'].'\'');
+
 		if ($value_langauge->language == 'fr')
 			$register_email[] = array(
 				'EMAIL'=>$register_row['email'],
@@ -812,6 +879,7 @@ class Sendinblue extends Module {
 				'PRENOM'=>$register_row['firstname'],
 				'NOM'=>$register_row['lastname'],
 				'DDNAISSANCE'=>$birthday,
+				'PS_LANG'=>$langisocode,
 				'CLIENT'=>1,
 				'SMS'=>$mobile
 			);
@@ -822,6 +890,7 @@ class Sendinblue extends Module {
 			'NAME'=>$register_row['firstname'],
 			'SURNAME'=>$register_row['lastname'],
 			'BIRTHDAY'=>$birthday,
+			'PS_LANG'=>$langisocode,
 			'CLIENT'=>1,
 			'SMS'=>$mobile
 		);
@@ -848,9 +917,9 @@ class Sendinblue extends Module {
 		if ($unregister_result)
 		foreach ($unregister_result as $unregister_row)
 		if ($value_langauge->language == 'fr')
-			$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'PRENOM'=>'', 'NOM'=>'', 'DDNAISSANCE'=>'', 'CLIENT'=>0,'SMS'=>'');
+			$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'PRENOM'=>'', 'NOM'=>'', 'DDNAISSANCE'=>'', 'PS_LANG'=>'', 'CLIENT'=>0,'SMS'=>'');
 		else
-		$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'NAME'=>'', 'SURNAME'=>'', 'BIRTHDAY'=>'', 'CLIENT'=>0,'SMS'=>'');
+		$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'NAME'=>'', 'SURNAME'=>'', 'BIRTHDAY'=>'', 'PS_LANG'=>'','CLIENT'=>0,'SMS'=>'');
 		$page++;
 		$total_page--;
 		foreach ($register_email as $line)
@@ -1053,7 +1122,6 @@ class Sendinblue extends Module {
 		{
 			Configuration::updateValue('Sendin_Sender_Shipment', $sender_shipment);
 			Configuration::updateValue('Sendin_Sender_Shipment_Message', $sender_shipment_message);
-			Configuration::updateValue('Sendin_Sms_Message_Land_Id', $this->context->language->id);
 			return $this->redirectPage($this->l('Setting updated'), 'SUCCESS');
 		}
 	}
@@ -1244,7 +1312,10 @@ class Sendinblue extends Module {
 			$arr['exclude_list'] = '';
 			$arr['schedule'] = date('Y-m-d H:i:s', time() + 300);
 
-			$this->curlRequest($arr);
+			$result = $this->curlRequest($arr);
+			$data = Tools::jsondecode($result);
+			if (!empty($data->errorMsg))
+			return $this->redirectPage($this->l($data->errorMsg), 'ERROR');
 		}
 		return $this->redirectPage($this->l('Message has been sent successfully'), 'SUCCESS');
 	}
@@ -1363,9 +1434,6 @@ class Sendinblue extends Module {
 	{
 		$this->_html .= $this->addCss();
 
-		//We set the default status of SendinBlue SMTP and tracking code to 0
-		$this->checkSmtpStatus();
-
 		// send test mail to check if SMTP is working or not.
 		if (Tools::isSubmit('sendTestMail'))
 			$this->sendMailProcess();
@@ -1402,6 +1470,27 @@ class Sendinblue extends Module {
 		}
 		if (Tools::isSubmit('submitUpdate'))
 			$this->apiKeyPostProcessConfiguration();
+		// Import old user in sendinblue by csv
+		if (Tools::isSubmit('submitUpdateImport'))
+		{
+			$this->autoSubscribeAfterInstallation();
+			$data = array();
+			$data['webaction'] = 'IMPORTUSERS';
+			$data['key'] = Configuration::get('Sendin_Api_Key');
+			$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+			$data['listids'] = Configuration::get('Sendin_Selected_List_Data');
+			$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+			// List id should be optional
+			$responce_data = $this->curlRequestAsyc($data);
+			$res_value = Tools::jsonDecode($responce_data);
+			Configuration::updateValue('Sendin_import_user_status', 0);
+			if (empty($res_value->process_id))
+			{
+				Configuration::updateValue('Sendin_import_user_status', 1);
+				$this->redirectPage($this->l('Old subscribers not imported successfully, please click on Import Old Subscribers button to import them again'), 'ERROR');
+			}
+			return $this->redirectPage($this->l('Setting updated'), 'SUCCESS');
+		}
 
 		if (!empty($this->context->cookie->display_message) && !empty($this->context->cookie->display_message_type))
 		{
@@ -1516,7 +1605,7 @@ class Sendinblue extends Module {
 		// endif User put new key after having old key
 		$this->postValidation();
 
-		if (! count($this->post_errors))
+		if (!count($this->post_errors))
 		{
 			//If the API key is valid, we activate the module, otherwise we deactivate it.
 			$status = Tools::getValue('status');
@@ -1547,16 +1636,19 @@ class Sendinblue extends Module {
 					if (Configuration::get('Sendin_Selected_List_Data') == '' && Configuration::get('Sendin_First_Request') == '')
 					{
 						$this->getOldNewsletterEmails();
-						$this->createFolderName();
 						Configuration::updateValue('Sendin_First_Request', 1);
 						Configuration::updateValue('Sendin_Subscribe_Setting', 1);
 						Configuration::updateValue('Sendin_dropdown', 0);
+						Configuration::updateValue('Sendin_Notify_Cron_Executed', 0);
 
 						//We remove the default newsletter block since we
 						//have to add the Sendin newsletter block.
 						$this->removeBlocknewsletterBlock();
+						$this->createFolderName();
 					}
 
+					//We set the default status of SendinBlue SMTP and tracking code to 0
+					$this->checkSmtpStatus();
 					Configuration::updateValue('SENDINBLUE_CONFIGURATION_OK', true);
 					$this->redirectPage($this->l('Successfully updated'), 'SUCCESS');
 				}
@@ -1674,7 +1766,7 @@ class Sendinblue extends Module {
 	}
 
 	/**
-	* Fetches the SMTP status details for send test mail 
+	* Fetches the SMTP status details for send test mail
 	*/
 	public function realTimeSmtpResult()
 	{
@@ -1690,12 +1782,12 @@ class Sendinblue extends Module {
 	*/
 	public function curlRequest($data)
 	{
-			$url = 'http://ws.mailin.fr/'; // WS URL
+		$url = 'http://ws.mailin.fr/'; // WS URL
 
 		$ch = curl_init();
 		// prepate data for curl post
 		$ndata = '';
-		$data['source'] = 'PS';
+		$data['source'] = 'PrestaShop';
 		if (is_array($data))
 			foreach ($data as $key => $value)
 				$ndata .= $key.'='.urlencode($value).'&';
@@ -1728,7 +1820,7 @@ class Sendinblue extends Module {
 		$ch = curl_init();
 		// prepate data for curl post
 		$ndata = '';
-		$data['source'] = 'PS';
+		$data['source'] = 'PrestaShop';
 		if (is_array($data))
 			foreach ($data as $key => $value)
 				$ndata .= $key.'='.urlencode($value).'&';
@@ -1766,8 +1858,8 @@ class Sendinblue extends Module {
 			return false;
 		$param = array();
 		$data = array();
-		$folder_id = $result[0];
-		$exist_list = $result[2];
+		$folder_id = !empty($result[0]) ? $result[0] : '';
+		$exist_list = !empty($result[2]) ? $result[2] : '';
 
 		if (!empty($key))
 		{
@@ -1800,12 +1892,19 @@ class Sendinblue extends Module {
 			$this->autoSubscribeAfterInstallation();
 			$data['webaction'] = 'IMPORTUSERS';
 			$data['key'] = $key;
-			$data['url'] = $this->path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+			$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
 			$data['listids'] = $list_id;
-			$data['notify_url'] = $this->path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+			$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
 			// List id should be optional
 			Configuration::updateValue('Sendin_Selected_List_Data', trim($list_id));
-			$this->curlRequestAsyc($data);
+			$response_data = $this->curlRequestAsyc($data);
+			$res_value = Tools::jsonDecode($response_data);
+			Configuration::updateValue('Sendin_import_user_status', 0);
+			if (empty($res_value->process_id))
+			{
+				Configuration::updateValue('Sendin_import_user_status', 1);
+				$this->redirectPage($this->l('Old subscribers not imported successfully, please click on Import Old Subscribers button to import them again'), 'ERROR');
+			}
 		}
 		elseif (empty($exist_list))
 		{
@@ -1823,12 +1922,18 @@ class Sendinblue extends Module {
 			$this->autoSubscribeAfterInstallation();
 			$data['webaction'] = 'IMPORTUSERS';
 			$data['key'] = $key;
-			$data['url'] = $this->path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+			$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
 			$data['listids'] = $list_id; // List id should be optional
-			$data['notify_url'] = $this->path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+			$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
 			Configuration::updateValue('Sendin_Selected_List_Data', trim($list_id));
-			$this->curlRequestAsyc($data);
-
+			$response_data = $this->curlRequestAsyc($data);
+			$res_value = Tools::jsonDecode($response_data);
+			Configuration::updateValue('Sendin_import_user_status', 0);
+			if (empty($res_value->process_id))
+			{
+				Configuration::updateValue('Sendin_import_user_status', 1);
+				$this->redirectPage($this->l('Old subscribers not imported successfully, please click on Import Old Subscribers button to import them again'), 'ERROR');
+			}
 		}
 	}
 
@@ -1958,11 +2063,18 @@ class Sendinblue extends Module {
 		$data = array();
 		$data['webaction'] = 'IMPORTUSERS';
 		$data['key'] = $key;
-		$data['url'] = $this->path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
+		$data['url'] = $this->local_path.$this->name.'/csv/ImportSubUsersToSendinblue.csv';
 		$data['listids'] = $list_id; // List id should be optional
-		$data['notify_url'] = $this->path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+		$data['notify_url'] = $this->local_path.'sendinblue/EmptyImportSubUsersFile.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
 		Configuration::updateValue('Sendin_Selected_List_Data', trim($list_id));
-		$this->curlRequestAsyc($data);
+		$response_data = $this->curlRequestAsyc($data);
+		$res_value = Tools::jsonDecode($response_data);
+		Configuration::updateValue('Sendin_import_user_status', 0);
+		if (empty($res_value->process_id))
+		{
+			Configuration::updateValue('Sendin_import_user_status', 1);
+			$this->redirectPage($this->l('Old subscribers not imported successfully, please click on Import Old Subscribers button to import them again'), 'ERROR');
+		}
 
 	}
 
@@ -1978,9 +2090,9 @@ class Sendinblue extends Module {
 		$data['webaction'] = 'ATTRIBUTES_CREATION';
 		$value_langauge = $this->getApiConfigValue();
 		if ($value_langauge->language == 'fr')
-		$data['normal_attributes'] = 'CIV,text|PRENOM,text|NOM,text|DDNAISSANCE,date|SMS,text|CLIENT,number';
+		$data['normal_attributes'] = 'CIV,text|PRENOM,text|NOM,text|DDNAISSANCE,date|PS_LANG,text|SMS,text|CLIENT,number';
 		else
-		$data['normal_attributes'] = 'CIV,text|NAME,text|SURNAME,text|BIRTHDAY,date|SMS,text|CLIENT,number';
+		$data['normal_attributes'] = 'CIV,text|NAME,text|SURNAME,text|BIRTHDAY,date|PS_LANG,text|SMS,text|CLIENT,number';
 		$data['transactional_attributes'] = 'ORDER_ID,id|ORDER_DATE,date|ORDER_PRICE,number';
 		$data['calculated_value'] = 'PS_LAST_30_DAYS_CA,
 			SUM[ORDER_PRICE,ORDER_DATE,>,NOW(-30)],true
@@ -2014,7 +2126,7 @@ class Sendinblue extends Module {
 	/**
 	* Subscribe a subscriber from SendinBlue.
 	*/
-	public function subscribeByruntime($email)
+	public function subscribeByruntime($email, $post_value = '')
 	{
 		if (!$this->syncSetting())
 			return false;
@@ -2023,6 +2135,7 @@ class Sendinblue extends Module {
 		$fname = '';
 		$lname = '';
 		$birthday = '';
+		$iso_code = '';
 		$client = 0;
 		$customer_data = $this->getCustomersByEmail($email);
 		if (!empty($customer_data[0]['id_customer']) && $customer_data[0]['id_customer'] > 0)
@@ -2044,17 +2157,25 @@ class Sendinblue extends Module {
 			else
 			$civility = '';
 
+			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+			$iso_code = Language::getIsoById( (int)$customer_data[0]['id_lang']);
+			else
+			$iso_code = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
+				WHERE `id_lang` = \''.(int)$customer_data[0]['id_lang'].'\'');
+
 			$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$birthday.'|'.$client;
 		}
-		$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$birthday.'|'.$client;
+		$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$birthday.'|'.$iso_code.'|'.$client;
 		$data = array();
 		$data['key'] = trim(Configuration::get('Sendin_Api_Key'));
 		$data['webaction'] = 'USERCREADITM';
-		$data['blacklisted'] = '';
+		if ($post_value != '')
+		$data['blacklisted'] = 0;
+
 		if ($value_langauge->language == 'fr')
-		$data['attributes_name'] = 'CIV|PRENOM|NOM|DDNAISSANCE|CLIENT';
+		$data['attributes_name'] = 'CIV|PRENOM|NOM|DDNAISSANCE|PS_LANG|CLIENT';
 		else
-		$data['attributes_name'] = 'CIV|NAME|SURNAME|BIRTHDAY|CLIENT';
+		$data['attributes_name'] = 'CIV|NAME|SURNAME|BIRTHDAY|PS_LANG|CLIENT';
 		$data['attributes_value'] = $attribute;
 		$data['category'] = '';
 		$data['email'] = $email;
@@ -2066,13 +2187,13 @@ class Sendinblue extends Module {
 	/**
 	* Add / Modify subscribers with their full details like Firstname, Lastname etc.
 	*/
-	public function subscribeByruntimeRegister($email, $id_gender, $fname, $lname, $birthday, $phone_mobile)
+	public function subscribeByruntimeRegister($email, $id_gender, $fname, $lname, $birthday, $langisocode = '', $phone_mobile = '', $newsletter_status = '')
 	{
 		if (!$this->syncSetting())
 			return false;
 
 		$value_langauge = $this->getApiConfigValue();
-		$birthday = (isset($birthday))? $birthday : '';
+		$birthday = (isset($birthday))?$birthday : '';
 
 			if ($value_langauge->date_format == 'dd-mm-yyyy')
 				$dateof_birth = date('d-m-Y', strtotime($birthday));
@@ -2089,16 +2210,28 @@ class Sendinblue extends Module {
 		$civility = 'Miss.';
 		else
 		$civility = '';
-		$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$dateof_birth.'|'.$client.'|'.$phone_mobile;
+
+		if ($langisocode != '')
+		{
+			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+				$langisocode = Language::getIsoById( (int)$langisocode);
+				else
+				$langisocode = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
+					WHERE `id_lang` = \''.(int)$langisocode.'\'');
+		}
+
+		$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$dateof_birth.'|'.$langisocode.'|'.$client.'|'.$phone_mobile;
 		$data = array();
 		$data['key'] = trim(Configuration::get('Sendin_Api_Key'));
 		$data['webaction'] = 'USERCREADITM';
 		$data['email'] = $email;
-		$data['blacklisted'] = '';
+		if ($newsletter_status != '')
+		$data['blacklisted'] = 0;
+
 		if ($value_langauge->language == 'fr')
-		$data['attributes_name'] = 'CIV|PRENOM|NOM|DDNAISSANCE|CLIENT|SMS';
+		$data['attributes_name'] = 'CIV|PRENOM|NOM|DDNAISSANCE|PS_LANG|CLIENT|SMS';
 		else
-		$data['attributes_name'] = 'CIV|NAME|SURNAME|BIRTHDAY|CLIENT|SMS';
+		$data['attributes_name'] = 'CIV|NAME|SURNAME|BIRTHDAY|PS_LANG|CLIENT|SMS';
 		$data['attributes_value'] = $attribute;
 		$data['category'] = '';
 		$data['listid'] = Configuration::get('Sendin_Selected_List_Data');
@@ -2110,12 +2243,12 @@ class Sendinblue extends Module {
 	* Checks whether a subscriber is registered in the sendin_newsletter table.
 	* If they are registered, we subscriber them on SendinBlue.
 	*/
-	private function isEmailRegistered($customer_email, $mobile_number)
+	private function isEmailRegistered($customer_email, $mobile_number, $newsletter_status)
 	{
 		if (Db::getInstance()->getRow('SELECT `email` FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($customer_email).'\''))
-			$this->subscribeByruntime($customer_email);
-		elseif ($registered = Db::getInstance()->getRow('SELECT id_gender, firstname, lastname, birthday FROM '._DB_PREFIX_.'customer WHERE `email` = \''.pSQL($customer_email).'\''))
-			$this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], $mobile_number);
+			$this->subscribeByruntime($customer_email, $newsletter_status);
+		elseif ($registered = Db::getInstance()->getRow('SELECT id_gender, firstname, lastname, birthday, id_lang FROM '._DB_PREFIX_.'customer WHERE `email` = \''.pSQL($customer_email).'\''))
+			$this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], $registered['id_lang'], $mobile_number, $newsletter_status);
 	}
 
 	/**
@@ -2137,7 +2270,7 @@ class Sendinblue extends Module {
 			</label><span class="'.$this->cl_version.'">
 			<input type="radio" class="ordertracking script radio_nospaceing" id="yesradio" name="script" value="1"
 			'.(Configuration::get('Sendin_Tracking_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
-			<input type="radio" class="ordertracking script radio_spaceing2" id="noradio" 
+			<input type="radio" class="ordertracking script radio_spaceing2" id="noradio"
 			name="script" value="0" '.(! Configuration::get('Sendin_Tracking_Status') ? 'checked="checked" ' : '').'/>'
 			.$this->l('No').'
 			<span class="toolTip"
@@ -2215,7 +2348,7 @@ class Sendinblue extends Module {
 			<label> '.$this->l('Manage follow up email for user subscription').'
 			</label>
 			</td>
-			<td class="'.$this->cl_version.' managesubscribeBlock"><div class="listData" style="text-align:left;"><select name="template" class="ui-state-default" style="width: 225px; height:22px; border-radius:4px;"><option value="">'.$this->l('Select Template').'</option>
+			<td class="'.$this->cl_version.' managesubscribeBlock"><div class="listData" style="text-align:left;"><select name="template" class="ui-state-default" style="width: 225px; height:22px; border-radius:4px; margin-right:5px;"><option value="">'.$this->l('Select Template').'</option>
 			';
 			$options = '';
 			$camp = $this->templateDisplay();
@@ -2223,11 +2356,14 @@ class Sendinblue extends Module {
 			{
 				foreach ($camp->result->campaign_records as $template_data)
 				{
-					$options .= '<option value="'.$template_data->id.'"';
-					if ($template_data->id == Configuration::get('Sendin_Template_Id'))
-					$options .= 'selected="selected"';
+					if ($template_data->templ_status === 'Active')
+					{
+						$options .= '<option value="'.$template_data->id.'"';
+						if ($template_data->id == Configuration::get('Sendin_Template_Id'))
+						$options .= 'selected="selected"';
 
-					$options .= '>'.$template_data->campaign_name.'</option>';
+						$options .= '>'.$template_data->campaign_name.'</option>';
+					}
 				}
 			}
 			$this->_second_block_code .= $options.'</select><span class="toolTip"
@@ -2236,12 +2372,16 @@ class Sendinblue extends Module {
 			</td>
 			</tr>';
 			$this->_second_block_code .= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
-			<td>
-			<input type="submit" name="submitForm2" value="'.$this->l('Update').'" class="button" />&nbsp;</form>
+			<td colspan="2">
+			<input type="submit" name="submitForm2" value="'.$this->l('Update').'" class="button" />&nbsp;
 			</td>
-			</tr>';
-			$this->_second_block_code .= '<tr class="managesubscribeBlock" ><td colspan="2" class="'.$this->cl_version.'">'.$this->l('To synchronize the emails of your customers from SendinBlue platform to your e-commerce website, you should run').'
-			<a target="_blank" href="'.$this->path.'sendinblue/cron.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">
+			</tr><tr class="managesubscribeBlock"><td>&nbsp;</td><td colspan="2">';
+			$data = '';
+			if (Configuration::get('Sendin_import_user_status') == 1)
+				$data .= '<input type="submit" name="submitUpdateImport" value="'.$this->l('Import Old Subscribers').'" class="button" />&nbsp;</form>';
+			$this->_second_block_code .= $data.'</td>
+			</tr><tr class="managesubscribeBlock" ><td colspan="3" class="'.$this->cl_version.'">'.$this->l('To synchronize the emails of your customers from SendinBlue platform to your e-commerce website, you should run').'
+			<a target="_blank" href="'.$this->local_path.'sendinblue/cron.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">
 			'.$this->l('this link').'</a> ';
 			$this->_second_block_code .= $this->l('each day.').'
 			<span class="toolTip" title="'.$this->l('Note that if you change the name of your Shop (currently ').Configuration::get('PS_SHOP_NAME').$this->l(') the token value changes.').'">&nbsp;</span></td></tr></table>';
@@ -2302,7 +2442,7 @@ class Sendinblue extends Module {
 	public function mailSendBySms()
 	{
 		$this->context->smarty->assign('site_name', Configuration::get('PS_SHOP_NAME'));
-		$this->context->smarty->assign('link', '<a target="_blank" href="'.$this->path.'sendinblue/smsnotifycron.php?lang='.
+		$this->context->smarty->assign('link', '<a target="_blank" href="'.$this->local_path.'sendinblue/smsnotifycron.php?lang='.
 		$this->context->language->id.'&token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">'.$this->l('this link').'</a>');
 		$this->context->smarty->assign('current_credits_sms', $this->getSmsCredit());
 		$this->context->smarty->assign('sms_campaign_status', Configuration::get('Sendin_Api_Sms_Campaign_Status'));
@@ -2336,7 +2476,7 @@ class Sendinblue extends Module {
 
 	private function displayBankWire()
 	{
-		$this->_html .= '<img src="'.$this->path.'sendinblue/img/'.$this->l('sendinblue.png').'"
+		$this->_html .= '<img src="'.$this->local_path.'sendinblue/img/'.$this->l('sendinblue.png').'"
 		style="float:left; margin:0px 15px 30px 0px;"><div style="float:left;
 		font-weight:bold; padding:25px 0px 0px 0px; color:#268CCD;">'.
 		$this->l('SendinBlue : THE all-in-one plugin for your marketing and transactional emails.').'</div>
@@ -2350,7 +2490,7 @@ class Sendinblue extends Module {
 		$this->_html .= '<div class="module_error alert error">'.$this->l('We notified that you are using the previous version of our plugin, please uninstall it / remove it and keep only the latest version of SendinBlue').'</div>';
 		$this->_html .= '
 		<fieldset>
-		<legend><img src="'.$this->path.$this->name.'/logo.gif" alt="" /> '.$this->l('SendinBlue').'</legend>
+		<legend><img src="'.$this->local_path.$this->name.'/logo.gif" alt="" /> '.$this->l('SendinBlue').'</legend>
 		<div style="float: right; width: 340px; height: 205px; border: dashed 1px #666; padding: 8px; margin-left: 12px; margin-top:-15px;">
 		<h2 style="color:#268CCD;">'.$this->l('Contact SendinBlue Team').'</h2>
 		<div style="clear: both;"></div>
@@ -2393,10 +2533,10 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 		$this->_html .= '<p style="margin:1.5em 0;">'.$this->displaySendin().'</p>';
 		$this->_html .= '<style>.margin-form{padding: 0 0 2em 210px;}</style><fieldset style="margin-bottom:10px;">
-		<legend><img src="'.$this->path.$this->name.'/logo.gif" alt="" />'.$this->l('Prerequisites').'</legend>';
+		<legend><img src="'.$this->local_path.$this->name.'/logo.gif" alt="" />'.$this->l('Prerequisites').'</legend>';
 		$this->_html .= '<label">-
 		'.$this->l('You should have a SendinBlue account. You can create a free account here : ').
-		'<a href="'.$this->l('https://www.sendinblue.com').'" class="link_action"  target="_blank">&nbsp;'.$this->l('https://www.sendinblue.com').'</a></label><br />';
+		'<a href="'.$this->l('https://www.sendinblue.com').'" class="link_action" style="color:#268CCD;"  target="_blank">&nbsp;'.$this->l('https://www.sendinblue.com').'</a></label><br />';
 
 		if (!extension_loaded('curl') || !ini_get('allow_url_fopen'))
 			$this->_html .= '<label">-
@@ -2411,7 +2551,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$this->_html .= '<legend>
 		<img src="'.$this->_path.'logo.gif" />'.$this->l('Settings').'</legend>
 		<label>'.$this->l('Activate the SendinBlue module').'</label><div class="margin-form" style="padding-top:5px">
-		<input type="radio" id="y" class="keyyes radio_spaceing" 
+		<input type="radio" id="y" class="keyyes radio_spaceing"
 		 name="status" value="1"
 		'.(Configuration::get('Sendin_Api_Key_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
 		<input type="radio"  id="n" class="keyyes radio_spaceing2"
@@ -2615,7 +2755,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 						WHERE `email` = \''.pSQL($this->email).'\''))
 						return $this->error = $this->l('Error during subscription');
 			}
-			$this->subscribeByruntime($this->email);
+			$this->subscribeByruntime($this->email, $post_action);
 			$this->sendWsTemplateMail($this->email);
 
 			return $this->valid = $this->l('Subscription successful');
@@ -2634,17 +2774,17 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$this->unregisterHook('createAccount');
 		$this->unregisterHook('createAccountForm');
 		$this->unregisterHook('OrderConfirmation');
-		Configuration::updateValue('Sendin_Api_Sms_Order_Status', 0);
-		Configuration::updateValue('Sendin_Api_Sms_shipment_Status', 0);
-		Configuration::updateValue('Sendin_Api_Sms_Campaign_Status', 0);
-		Configuration::updateValue('Sendin_Sender_Shipment_Message', '');
-		Configuration::updateValue('Sendin_Sender_Shipment', '');
-		Configuration::updateValue('Sendin_Sender_Order', '');
-		Configuration::updateValue('Sendin_Sender_Order_Message', '');
-		Configuration::updateValue('Sendin_Notify_Value', '');
-		Configuration::updateValue('Sendin_Notify_Email', '');
-		Configuration::updateValue('Sendin_Api_Sms_Credit', 0);
-		Configuration::updateValue('Sendin_Notify_Cron_Executed', 0);
+		Configuration::deleteByName('Sendin_Api_Sms_Order_Status');
+		Configuration::deleteByName('Sendin_Api_Sms_shipment_Status');
+		Configuration::deleteByName('Sendin_Api_Sms_Campaign_Status');
+		Configuration::deleteByName('Sendin_Sender_Shipment_Message');
+		Configuration::deleteByName('Sendin_Sender_Shipment');
+		Configuration::deleteByName('Sendin_Sender_Order');
+		Configuration::deleteByName('Sendin_Sender_Order_Message');
+		Configuration::deleteByName('Sendin_Notify_Value');
+		Configuration::deleteByName('Sendin_Notify_Email');
+		Configuration::deleteByName('Sendin_Api_Sms_Credit');
+		Configuration::deleteByName('Sendin_Notify_Cron_Executed');
 
 		if (Configuration::get('Sendin_Api_Smtp_Status'))
 			$this->resetConfigSendinSmtp();
@@ -2659,6 +2799,9 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		Configuration::deleteByName('Sendin_Api_Key');
 		Configuration::deleteByName('Sendin_Api_Smtp_Status');
 		Configuration::deleteByName('Sendin_Selected_List_Data');
+		Configuration::deleteByName('Sendin_Template_Id');
+		Configuration::deleteByName('Sendin_import_user_status');
+		Configuration::deleteByName('SENDINBLUE_CONFIGURATION_OK');
 
 		if (Configuration::get('Sendin_Newsletter_table'))
 		{
@@ -2974,12 +3117,12 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$so = $this->l('Select option');
 		$selected = $this->l('selected');
 		$html = '<script>  var selectoption = "'.$so.'"; </script>';
-		$html .= '<script>  var base_url = "'.str_replace('modules/', '', $this->path).'"; </script>';
+		$html .= '<script>  var base_url = "'.str_replace('modules/', '', $this->local_path).'"; </script>';
 		$html .= '<script>  var selected = "'.$selected.'"; </script>';
-		$sendin_js_path = $this->path.$this->name.'/js/'.$this->name.$min.'.js?_='.time();
-		$js_ddl_list = $this->path.$this->name.'/js/jquery.multiselect.min.js';
-		$liveclickquery = $this->path.$this->name.'/js/jquery.livequery.min.js';
-		$s_css = $this->path.$this->name.'/css/'.$this->name.'.css?_='.time();
+		$sendin_js_path = $this->local_path.$this->name.'/js/'.$this->name.$min.'.js?_='.time();
+		$js_ddl_list = $this->local_path.$this->name.'/js/jquery.multiselect.min.js';
+		$liveclickquery = $this->local_path.$this->name.'/js/jquery.livequery.min.js';
+		$s_css = $this->local_path.$this->name.'/css/'.$this->name.'.css?_='.time();
 
 		$base = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://');
 
@@ -3085,7 +3228,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 				var nbBaseURL = "http://tracking.mailin.fr/";
 				loadScript(nbJsURL+"/nbv2.js",
 				function(){
-				/*You can put your custom variables here as shown in example.*/					
+				/*You can put your custom variables here as shown in example.*/
 				try {
 				var nbTracker = nb.getTracker(nbBaseURL , "'.Tools::safeOutput($this->tracking->result->tracking_data->site_id).'");
 				var list = ['.$list.'];
@@ -3263,10 +3406,10 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		// select only newly added users and registered user
 		$register_result = Db::getInstance()->ExecuteS('
 			SELECT  C.id_customer, C.newsletter, C.newsletter_date_add, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
-				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN 
+				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
 				(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
 				LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country =  PSA.id_country
-				WHERE C.newsletter_date_add > 0 
+				WHERE C.newsletter_date_add > 0
 				GROUP BY C.id_customer');
 
 		$value_langauge = $this->getApiConfigValue();
@@ -3343,8 +3486,6 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 		curl_setopt ($ch, CURLOPT_POSTFIELDS, $post_data);
 
-		curl_setopt ($ch, CURLOPT_FOLLOWLOCATION, 1);
-
 		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$return_data = curl_exec ($ch);
@@ -3370,6 +3511,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		return Tools::jsonDecode($temp_result);
 
 	}
+
 	/**
 	* Update temlpate id in prestashop configuration.
 	*/
@@ -3379,5 +3521,21 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 		if ($value_template_id != '')
 			Configuration::updateValue('Sendin_Template_Id', $value_template_id);
+	}
+}
+
+
+class SendinblueResources
+{
+	/**
+	* check condition for less then 1.4.5 version.
+	*/
+	public function checkConditionOlderVersion()
+	{
+		$configure = Tools::getValue('configure');
+		if ((!empty($configure) && $configure == 'sendinblue') || strpos($_SERVER['REQUEST_URI'], 'authentication.php') !== false || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
+			return true;
+		else
+			return false;
 	}
 }
