@@ -977,7 +977,6 @@ class Sendinblue extends Module {
 		}
 
 		$unregister_value = Db::getInstance()->ExecuteS('SELECT count(*) as count_value FROM '._DB_PREFIX_.'sendin_newsletter WHERE active = 1');
-		$unregister_result = Db::getInstance()->ExecuteS('SELECT email FROM '._DB_PREFIX_.'sendin_newsletter WHERE active = 1 limit '.$start.','.$end.'');
 		// registered user store in array
 		$start = 0;
 		$end = 1000;
@@ -988,6 +987,7 @@ class Sendinblue extends Module {
 			$register_email = array();
 			$start = ($page - 1) * $end;
 		// unregistered user store in array
+		$unregister_result = Db::getInstance()->ExecuteS('SELECT email FROM '._DB_PREFIX_.'sendin_newsletter WHERE active = 1 limit '.$start.','.$end.'');
 		if ($unregister_result)
 		foreach ($unregister_result as $unregister_row)
 		if ($value_langauge->language == 'fr')
