@@ -25,7 +25,7 @@
 */
 
 if (! defined('_PS_VERSION_'))
-exit();
+	exit();
 
 if (!class_exists('Customer'))
 	include_once(_PS_CLASS_DIR_.'/../classes/Customer.php');
@@ -36,7 +36,7 @@ if (version_compare(_PS_VERSION_, '1.4.5', '<'))
 		include(dirname(__FILE__).'/config.php');
 }
 else
-include(dirname(__FILE__).'/config.php');
+	include(dirname(__FILE__).'/config.php');
 
 class Sendinblue extends Module {
 
@@ -62,7 +62,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.1.3';
+		$this->version = '2.1.4';
 
 		parent::__construct();
 
@@ -73,18 +73,19 @@ class Sendinblue extends Module {
 
 		require(_PS_MODULE_DIR_.$this->name.'/backward_compatibility/backward.php');
 
-		$this->langid = $this->context->language->id;
+		$this->langid = !empty($this->context->language->id) ? $this->context->language->id :'';
 		$this->lang_cookie = $this->context->cookie;
+
 		if (version_compare(_PS_VERSION_, '1.4.5', '<'))
 		{
 			$sendinblue_resources = new SendinblueResources();
 			if ($sendinblue_resources->checkConditionOlderVersion() === true)
 			{
-			$pathconfig = new Pathfindsendinblue();
-			$this->local_path = $pathconfig->pathdisp();
-			//Call the callhookRegister method to send an email to the SendinBlue user
-			//when someone registers.
-			$this->callhookRegister();
+				$pathconfig = new Pathfindsendinblue();
+				$this->local_path = $pathconfig->pathdisp();
+				//Call the callhookRegister method to send an email to the SendinBlue user
+				//when someone registers.
+				$this->callhookRegister();
 			}
 		}
 		else
@@ -95,19 +96,21 @@ class Sendinblue extends Module {
 			//when someone registers.
 			$this->callhookRegister();
 		}
+
 		// Checking Extension
 		if (!extension_loaded('curl') || !ini_get('allow_url_fopen'))
 		{
 			if (!extension_loaded('curl') && !ini_get('allow_url_fopen'))
-			return $this->_html.$this->l('You must enable cURL extension and allow_url_fopen option on your server if you want to use this module.');
+				return $this->_html.$this->l('You must enable cURL extension and allow_url_fopen option on your server if you want to use this module.');
 			else if (!extension_loaded('curl'))
-			return $this->_html.$this->l('You must enable cURL extension on your server if you want to use this module.');
+				return $this->_html.$this->l('You must enable cURL extension on your server if you want to use this module.');
 			else if (!ini_get('allow_url_fopen'))
-			return $this->_html.$this->l('You must enable allow_url_fopen option on your server if you want to use this module.');
+				return $this->_html.$this->l('You must enable allow_url_fopen option on your server if you want to use this module.');
 		}
+
 		if (version_compare(_PS_VERSION_, '1.5', '>'))
 			$this->cl_version = 'ver_5';
-			else
+		else
 			$this->cl_version = 'ver_4';
 
 	}
@@ -178,7 +181,11 @@ class Sendinblue extends Module {
 					$customer = new CustomerCore((int)$id_customer);
 
 					// Code to get address of logged in user
-					$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
+					if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+						$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
+					else
+						$customer_address = $customer->getCustomerAddresses((int)$customer_data[0]['id_customer']);
+
 					$phone_mobile = '';
 					$id_country = '';
 					// Check if user have address data
@@ -222,140 +229,140 @@ class Sendinblue extends Module {
 		}
 		else
 		{
-		$this->newsletter = Tools::getValue('newsletter');
-		$this->email = Tools::getValue('email');
-		$id_country = Tools::getValue('id_country');
-		$phone_mobile = Tools::getValue('phone_mobile');
-		$this->id_gender = Tools::getValue('id_gender');
-		$this->first_name = Tools::getValue('customer_firstname');
-		$this->last_name = Tools::getValue('customer_lastname');
-		$this->id_lang = $this->context->cookie->id_lang;
-		$this->days = Tools::getValue('days');
-		$this->months = Tools::getValue('months');
-		$this->years = Tools::getValue('years');
-		$birthday = ($this->years.'-'.$this->months.'-'.$this->days);
+			$this->newsletter = Tools::getValue('newsletter');
+			$this->email = Tools::getValue('email');
+			$id_country = Tools::getValue('id_country');
+			$phone_mobile = Tools::getValue('phone_mobile');
+			$this->id_gender = Tools::getValue('id_gender');
+			$this->first_name = Tools::getValue('customer_firstname');
+			$this->last_name = Tools::getValue('customer_lastname');
+			$this->id_lang = !empty($this->context->cookie->id_lang) ? $this->context->cookie->id_lang : '';
+			$this->days = Tools::getValue('days');
+			$this->months = Tools::getValue('months');
+			$this->years = Tools::getValue('years');
+			$birthday = ($this->years.'-'.$this->months.'-'.$this->days);
 
-		if (isset($this->newsletter) && $this->newsletter == 1 && $this->email != '')
-		{
-			$result = Db::getInstance()->getRow('SELECT `call_prefix` FROM '._DB_PREFIX_.
-			'country WHERE `id_country` = \''.(int)$id_country.'\'');
-			$phone_mobile = $this->checkMobileNumber($phone_mobile, $result['call_prefix']);
-				$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
+			if (isset($this->newsletter) && $this->newsletter == 1 && $this->email != '')
+			{
+				$result = Db::getInstance()->getRow('SELECT `call_prefix` FROM '._DB_PREFIX_.
+				'country WHERE `id_country` = \''.(int)$id_country.'\'');
+				$phone_mobile = $this->checkMobileNumber($phone_mobile, $result['call_prefix']);
+					$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
 
-		if (isset($this->newsletter) && $this->newsletter == 1)
-		$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $birthday, $this->id_lang, $phone_mobile, $this->newsletter);
-		$this->sendWsTemplateMail($this->email);
-		if (Configuration::get('Sendin_Api_Key_Status') == 1)
-			$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
+			if (isset($this->newsletter) && $this->newsletter == 1)
+				$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $birthday, $this->id_lang, $phone_mobile, $this->newsletter);
+			$this->sendWsTemplateMail($this->email);
+			if (Configuration::get('Sendin_Api_Key_Status') == 1)
+				$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
 					'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
-			$email_id = (isset($result_id['id'])?$result_id['id']:'0');
-			if ($email_id > 0)
-			{
-				Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
-				if ($this->newsletter == 0)
-					$this->unsubscribeByruntime($this->context->cookie->email);
-			}
-		}
-		elseif (Tools::getValue('email') != '')
-		{
-			// Load customer data for logged in user so that we can register his/her with sendinblue
-			if (!empty($this->context->cookie->email))
-			$customer_data = $this->getCustomersByEmail($this->context->cookie->email);
-
-			// Check if client have records in customer table
-			if (!empty($customer_data[0]['id_customer']) && count($customer_data) > 0)
-			{
-				$newsletter_status = !empty($this->newsletter)?$this->newsletter : $customer_data[0]['newsletter'];
-				$this->email = !empty($this->email)?$this->email : $customer_data[0]['email'];
-				$this->id_gender = !empty($this->id_gender)?$this->id_gender : $customer_data[0]['id_gender'];
-				$this->first_name = !empty($this->first_name)?$this->first_name : $customer_data[0]['firstname'];
-				$this->last_name = !empty($this->last_name)?$this->last_name : $customer_data[0]['lastname'];
-				$this->id_lang = !empty($this->id_lang)?$this->id_lang : $customer_data[0]['id_lang'];
-				$this->birthday = (!empty($this->years) && !empty($this->months) && !empty($this->days))?$birthday : $customer_data[0]['birthday'];
-				if ($newsletter_status == 1)
-				$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
-
-				if (Configuration::get('Sendin_Api_Key_Status') == 1)
-					$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
-							'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
-					$email_id = (isset($result_id['id'])?$result_id['id']:'0');
-					if ($email_id > 0)
-					{
-						Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
-						if ($this->newsletter == 0)
-							$this->unsubscribeByruntime($this->context->cookie->email);
-					}
-			}
-		}
-		elseif (Tools::getValue('phone_mobile') != '' || Tools::getValue('controller') == 'addresses' || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
-		{
-			// Load customer data for logged in user so that we can register his/her with sendinblue
-			if (!empty($this->context->cookie->email))
-			$customer_data = $this->getCustomersByEmail($this->context->cookie->email);
-
-			// Check if client have records in customer table
-			if (!empty($customer_data[0]['id_customer']) && count($customer_data) > 0)
-			{
-				$newsletter_status = !empty($customer_data[0]['newsletter'])?$customer_data[0]['newsletter'] : '';
-				$this->email = !empty($customer_data[0]['email'])?$customer_data[0]['email'] : '';
-				$this->id_gender = !empty($customer_data[0]['id_gender'])?$customer_data[0]['id_gender'] : '';
-				$this->first_name = !empty($customer_data[0]['firstname'])?$customer_data[0]['firstname'] : '';
-				$this->last_name = !empty($customer_data[0]['lastname'])?$customer_data[0]['lastname'] : '';
-				$this->id_lang = !empty($customer_data[0]['id_lang'])?$customer_data[0]['id_lang'] : '';
-				$this->birthday = !empty($customer_data[0]['birthday'])?$customer_data[0]['birthday'] : '';
-
-				// If logged in user register with newsletter
-				if (isset($newsletter_status) && $newsletter_status == 1)
+				$email_id = (isset($result_id['id'])?$result_id['id']:'0');
+				if ($email_id > 0)
 				{
-					$id_customer = $customer_data[0]['id_customer'];
-					$customer = new CustomerCore((int)$id_customer);
+					Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+					if ($this->newsletter == 0)
+						$this->unsubscribeByruntime($this->context->cookie->email);
+				}
+			}
+			elseif (Tools::getValue('email') != '')
+			{
+				// Load customer data for logged in user so that we can register his/her with sendinblue
+				if (!empty($this->context->cookie->email))
+					$customer_data = $this->getCustomersByEmail($this->context->cookie->email);
 
-					// Code to get address of logged in user
-					$customer_address = $customer->getAddresses((int)$this->context->language->id);
-					$phone_mobile = '';
-					$id_country = '';
-					// Check if user have address data
-					if ($customer_address && count($customer_address) > 0)
-					{
-					// Code to get latest phone number of logged in user
-						$count_address = count($customer_address);
-						for ($i = $count_address; $i >= 0; $i--)
+				// Check if client have records in customer table
+				if (!empty($customer_data[0]['id_customer']) && count($customer_data) > 0)
+				{
+					$newsletter_status = !empty($this->newsletter)?$this->newsletter : $customer_data[0]['newsletter'];
+					$this->email = !empty($this->email)?$this->email : $customer_data[0]['email'];
+					$this->id_gender = !empty($this->id_gender)?$this->id_gender : $customer_data[0]['id_gender'];
+					$this->first_name = !empty($this->first_name)?$this->first_name : $customer_data[0]['firstname'];
+					$this->last_name = !empty($this->last_name)?$this->last_name : $customer_data[0]['lastname'];
+					$this->id_lang = !empty($this->id_lang)?$this->id_lang : $customer_data[0]['id_lang'];
+					$this->birthday = (!empty($this->years) && !empty($this->months) && !empty($this->days))?$birthday : $customer_data[0]['birthday'];
+					if ($newsletter_status == 1)
+						$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
+
+					if (Configuration::get('Sendin_Api_Key_Status') == 1)
+						$result_id = Db::getInstance()->getRow('SELECT * FROM '._DB_PREFIX_.
+							'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+						$email_id = (isset($result_id['id'])?$result_id['id']:'0');
+						if ($email_id > 0)
 						{
-							$temp = 0;
-							foreach ($customer_address as $select_address)
+							Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\'');
+							if ($this->newsletter == 0)
+								$this->unsubscribeByruntime($this->context->cookie->email);
+						}
+				}
+			}
+			elseif (Tools::getValue('phone_mobile') != '' || Tools::getValue('controller') == 'addresses' || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
+			{
+				// Load customer data for logged in user so that we can register his/her with sendinblue
+				if (!empty($this->context->cookie->email))
+					$customer_data = $this->getCustomersByEmail($this->context->cookie->email);
+
+				// Check if client have records in customer table
+				if (!empty($customer_data[0]['id_customer']) && count($customer_data) > 0)
+				{
+					$newsletter_status = !empty($customer_data[0]['newsletter'])?$customer_data[0]['newsletter'] : '';
+					$this->email = !empty($customer_data[0]['email'])?$customer_data[0]['email'] : '';
+					$this->id_gender = !empty($customer_data[0]['id_gender'])?$customer_data[0]['id_gender'] : '';
+					$this->first_name = !empty($customer_data[0]['firstname'])?$customer_data[0]['firstname'] : '';
+					$this->last_name = !empty($customer_data[0]['lastname'])?$customer_data[0]['lastname'] : '';
+					$this->id_lang = !empty($customer_data[0]['id_lang'])?$customer_data[0]['id_lang'] : $this->id_lang;
+					$this->birthday = !empty($customer_data[0]['birthday'])?$customer_data[0]['birthday'] : '';
+
+					// If logged in user register with newsletter
+					if (isset($newsletter_status) && $newsletter_status == 1)
+					{
+						$id_customer = $customer_data[0]['id_customer'];
+						$customer = new CustomerCore((int)$id_customer);
+
+						// Code to get address of logged in user
+						$customer_address = $customer->getAddresses((int)$this->context->language->id);
+						$phone_mobile = '';
+						$id_country = '';
+						// Check if user have address data
+						if ($customer_address && count($customer_address) > 0)
+						{
+						// Code to get latest phone number of logged in user
+							$count_address = count($customer_address);
+							for ($i = $count_address; $i >= 0; $i--)
 							{
-								if ($temp < $select_address['date_upd'] && !empty($select_address['phone_mobile']))
+								$temp = 0;
+								foreach ($customer_address as $select_address)
 								{
-									$temp = $select_address['date_upd'];
-									$phone_mobile = $select_address['phone_mobile'];
-									$id_country = $select_address['id_country'];
+									if ($temp < $select_address['date_upd'] && !empty($select_address['phone_mobile']))
+									{
+										$temp = $select_address['date_upd'];
+										$phone_mobile = $select_address['phone_mobile'];
+										$id_country = $select_address['id_country'];
+									}
 								}
 							}
 						}
-					}
-					// Check if logged in user have phone number
-					if (!empty($phone_mobile))
-					{
-						// Code to get country prefix
-						$result = Db::getInstance()->getRow('SELECT `call_prefix` FROM '._DB_PREFIX_.
-							'country WHERE `id_country` = \''.(int)$id_country.'\'');
+						// Check if logged in user have phone number
+						if (!empty($phone_mobile))
+						{
+							// Code to get country prefix
+							$result = Db::getInstance()->getRow('SELECT `call_prefix` FROM '._DB_PREFIX_.
+								'country WHERE `id_country` = \''.(int)$id_country.'\'');
 
-						/**
-						* Code to validate phone number (if we have '00' or '+' then it'll add '00' without country prefix,
-						* if we have '0' then it'll add '00' with country prefix)
-						*/
-						$phone_mobile = $this->checkMobileNumber($phone_mobile, (!empty($result['call_prefix'])?$result['call_prefix']:''));
-						$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
+							/**
+							* Code to validate phone number (if we have '00' or '+' then it'll add '00' without country prefix,
+							* if we have '0' then it'll add '00' with country prefix)
+							*/
+							$phone_mobile = $this->checkMobileNumber($phone_mobile, (!empty($result['call_prefix'])?$result['call_prefix']:''));
+							$phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
+						}
+						// Code to update sendinblue with logged in user data.
+						$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
 					}
-					// Code to update sendinblue with logged in user data.
-					$this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter);
 				}
 			}
-		}
 
 		}
 		if (!empty($this->context->language->id))
-		$this->context->cookie->sms_message_land_id = $this->context->language->id;
+			$this->context->cookie->sms_message_land_id = $this->context->language->id;
 	}
 
 	/**
@@ -367,7 +374,7 @@ class Sendinblue extends Module {
 		if (_PS_VERSION_ <= '1.4.1.0')
 			Db::getInstance()->Execute('UPDATE `'._DB_PREFIX_.'module` SET active = 0 WHERE name = "blocknewsletter"');
 		else
-		Module::getInstanceByName('blocknewsletter')->disable();
+			Module::getInstanceByName('blocknewsletter')->disable();
 	}
 
 	/**
@@ -397,19 +404,19 @@ class Sendinblue extends Module {
 			|| $this->registerHook('updateOrderStatus') === false)
 			return false;
 
-			Configuration::updateValue('Sendin_Newsletter_table', 1);
+		Configuration::updateValue('Sendin_Newsletter_table', 1);
 
-			if (Db::getInstance()->Execute('
-				CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'sendin_newsletter`(
-				`id` int(6) NOT NULL AUTO_INCREMENT,
-				`email` varchar(255) NOT NULL,
-				`newsletter_date_add` DATETIME NULL,
-				`ip_registration_newsletter` varchar(15) NOT NULL,
-				`http_referer` VARCHAR(255) NULL,
-				`active` TINYINT(1) NOT NULL DEFAULT 1,
-				PRIMARY KEY(`id`)
-			) ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8'))
-				return true;
+		if (Db::getInstance()->Execute('
+			CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'sendin_newsletter`(
+			`id` int(6) NOT NULL AUTO_INCREMENT,
+			`email` varchar(255) NOT NULL,
+			`newsletter_date_add` DATETIME NULL,
+			`ip_registration_newsletter` varchar(15) NOT NULL,
+			`http_referer` VARCHAR(255) NULL,
+			`active` TINYINT(1) NOT NULL DEFAULT 1,
+			PRIMARY KEY(`id`)
+		) ENGINE='._MYSQL_ENGINE_.' default CHARSET=utf8'))
+			return true;
 
 		return false;
 	}
@@ -440,7 +447,8 @@ class Sendinblue extends Module {
 	public function getRestoreOldNewsletteremails()
 	{
 		if (Configuration::get('Sendin_Api_Key_Status'))
-				Db::getInstance()->Execute('TRUNCATE table  '._DB_PREFIX_.'newsletter');
+			Db::getInstance()->Execute('TRUNCATE table  '._DB_PREFIX_.'newsletter');
+
 		if (_PS_VERSION_ >= '1.5.3.0')
 			Db::getInstance()->Execute('INSERT INTO  '._DB_PREFIX_.'newsletter
 			(email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
@@ -502,8 +510,8 @@ class Sendinblue extends Module {
 	*/
 	public function updateNewsletterStatus()
 	{
-		$this->newsletter = Tools::getValue('newsletter');
-		$this->email = Tools::getValue('email');
+		$this->newsletter = Tools::getValue('newsletter_value');
+		$this->email = Tools::getValue('email_value');
 
 		if (isset($this->newsletter) && $this->newsletter != '' && $this->email != '')
 		{
@@ -529,13 +537,13 @@ class Sendinblue extends Module {
 			}
 
 			Db::getInstance()->Execute('UPDATE `'._DB_PREFIX_.'sendin_newsletter`
-												SET active="'.pSQL($status).'",
-												newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'"
-												WHERE email = "'.pSQL($this->email).'"');
+				SET active="'.pSQL($status).'",
+				newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'"
+				WHERE email = "'.pSQL($this->email).'"');
 			Db::getInstance()->Execute('UPDATE `'._DB_PREFIX_.'customer`
-												SET newsletter="'.pSQL($status).'",
-												newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'"
-												WHERE email = "'.pSQL($this->email).'"');
+				SET newsletter="'.pSQL($status).'",
+				newsletter_date_add = "'.pSQL(date('Y-m-d H:i:s')).'"
+				WHERE email = "'.pSQL($this->email).'"');
 		}
 	}
 
@@ -555,7 +563,10 @@ class Sendinblue extends Module {
 			$customer = new CustomerCore((int)$id_customer);
 
 			// Code to get address of logged in user
-			$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
+			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+				$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
+			else
+				$customer_address = $this->getCustomerAddresses((int)$id_customer);
 			// Check if user have address data
 			if ($customer_address && count($customer_address) > 0)
 			{
@@ -813,15 +824,15 @@ class Sendinblue extends Module {
 		$key_value = array();
 
 		if ($value_langauge->language == 'fr')
-		$key_value[] = 'EMAIL,CIV,PRENOM,NOM,DDNAISSANCE,PS_LANG,CLIENT,SMS';
+			$key_value[] = 'EMAIL,CIV,PRENOM,NOM,DDNAISSANCE,PS_LANG,CLIENT,SMS';
 		else
-		$key_value[] = 'EMAIL,CIV,NAME,SURNAME,BIRTHDAY,PS_LANG,CLIENT,SMS';
+			$key_value[] = 'EMAIL,CIV,NAME,SURNAME,BIRTHDAY,PS_LANG,CLIENT,SMS';
 
 		foreach ($key_value as $linedata)
-		fwrite($handle, $linedata."\n");
+			fwrite($handle, $linedata."\n");
 
 		$start = 0;
-		$end = 2000;
+		$end = 1000;
 		$page = 1;
 		$total_page = Tools::ceilf($register_total[0]['total_val'] / $end);
 		while ($total_page > 0)
@@ -829,102 +840,167 @@ class Sendinblue extends Module {
 			$register_email = array();
 			$start = ($page - 1) * $end;
 
-		// select only newly added users and registered user
-		$register_result = Db::getInstance()->ExecuteS('
-		SELECT  C.id_customer, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, C.id_lang,PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
-		FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
-		(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
-		LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country =  PSA.id_country
-		WHERE C.newsletter=1
-		GROUP BY C.id_customer limit '.$start.','.$end.'');
-
-		if ($register_result)
-		foreach ($register_result as $register_row)
-		{
-		if (!empty($register_row['phone_mobile']) && $register_row['phone_mobile'] != '')
-			$mobile = $this->checkMobileNumber($register_row['phone_mobile'], $register_row['call_prefix']);
-			else
-			$mobile = '';
-
-		$birthday = (isset($register_row['birthday'])) ? $register_row['birthday'] : '';
-		if ($birthday > 0)
-		{
-			if ($value_langauge->date_format == 'dd-mm-yyyy')
-				$birthday = date('d-m-Y', strtotime($birthday));
-			else
-			$birthday = date('m-d-Y', strtotime($birthday));
-
-		}
-
-		$civility_value = (isset($register_row['id_gender'])) ? $register_row['id_gender'] : '';
-		if ($civility_value == 1)
-			$civility = 'Mr.';
-		elseif ($civility_value == 2)
-		$civility = 'Ms.';
-		elseif ($civility_value == 3)
-		$civility = 'Miss.';
-		else
-		$civility = '';
-
 		if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
-			$langisocode = Language::getIsoById( (int)$register_row['id_lang']);
+		{
+			// select only newly added users and registered user
+			$register_result = Db::getInstance()->ExecuteS('
+			SELECT  C.id_customer, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, C.id_lang, PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
+			FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
+			(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
+			LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country =  PSA.id_country
+			WHERE C.newsletter=1
+			GROUP BY C.id_customer limit '.$start.','.$end.'');
+
+			if ($register_result)
+				foreach ($register_result as $register_row)
+				{
+					if (!empty($register_row['phone_mobile']) && $register_row['phone_mobile'] != '')
+						$mobile = $this->checkMobileNumber($register_row['phone_mobile'], $register_row['call_prefix']);
+					else
+						$mobile = '';
+
+					$birthday = (isset($register_row['birthday'])) ? $register_row['birthday'] : '';
+					if ($birthday > 0)
+					{
+						if ($value_langauge->date_format == 'dd-mm-yyyy')
+							$birthday = date('d-m-Y', strtotime($birthday));
+						else
+						$birthday = date('m-d-Y', strtotime($birthday));
+
+					}
+
+					$civility_value = (isset($register_row['id_gender'])) ? $register_row['id_gender'] : '';
+					if ($civility_value == 1)
+						$civility = 'Mr.';
+					elseif ($civility_value == 2)
+					$civility = 'Ms.';
+					elseif ($civility_value == 3)
+					$civility = 'Miss.';
+					else
+					$civility = '';
+
+					$langisocode = Language::getIsoById( (int)$register_row['id_lang']);
+
+					if ($value_langauge->language == 'fr')
+						$register_email[] = array(
+							'EMAIL'=>$register_row['email'],
+							'CIV'=>$civility,
+							'PRENOM'=>$register_row['firstname'],
+							'NOM'=>$register_row['lastname'],
+							'DDNAISSANCE'=>$birthday,
+							'PS_LANG'=>$langisocode,
+							'CLIENT'=>1,
+							'SMS'=>$mobile
+						);
+					else
+						$register_email[] = array(
+							'EMAIL'=>$register_row['email'],
+							'CIV'=>$civility,
+							'NAME'=>$register_row['firstname'],
+							'SURNAME'=>$register_row['lastname'],
+							'BIRTHDAY'=>$birthday,
+							'PS_LANG'=>$langisocode,
+							'CLIENT'=>1,
+							'SMS'=>$mobile
+						);
+				}
+				$page++;
+				$total_page--;
+				foreach ($register_email as $line)
+					fputcsv($handle, $line);
+
+			}
 			else
-			$langisocode = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
-				WHERE `id_lang` = \''.(int)$register_row['id_lang'].'\'');
+			{
+				// select only newly added users and registered user
+				$register_result = Db::getInstance()->ExecuteS('
+				SELECT  C.id_customer, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, PSA.id_address, PSA.date_upd, PSA.phone_mobile, '._DB_PREFIX_.'country.call_prefix
+				FROM '._DB_PREFIX_.'customer as C LEFT JOIN '._DB_PREFIX_.'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
+				(SELECT id_customer, MAX(date_upd) upd  FROM '._DB_PREFIX_.'address GROUP BY '._DB_PREFIX_.'address.id_customer))
+				LEFT JOIN '._DB_PREFIX_.'country ON '._DB_PREFIX_.'country.id_country =  PSA.id_country
+				WHERE C.newsletter=1
+				GROUP BY C.id_customer limit '.$start.','.$end.'');
 
-		if ($value_langauge->language == 'fr')
-			$register_email[] = array(
-				'EMAIL'=>$register_row['email'],
-				'CIV'=>$civility,
-				'PRENOM'=>$register_row['firstname'],
-				'NOM'=>$register_row['lastname'],
-				'DDNAISSANCE'=>$birthday,
-				'PS_LANG'=>$langisocode,
-				'CLIENT'=>1,
-				'SMS'=>$mobile
-			);
-		else
-		$register_email[] = array(
-			'EMAIL'=>$register_row['email'],
-			'CIV'=>$civility,
-			'NAME'=>$register_row['firstname'],
-			'SURNAME'=>$register_row['lastname'],
-			'BIRTHDAY'=>$birthday,
-			'PS_LANG'=>$langisocode,
-			'CLIENT'=>1,
-			'SMS'=>$mobile
-		);
-		}
-		$page++;
-		$total_page--;
-		foreach ($register_email as $line)
-			fputcsv($handle, $line);
+				if ($register_result)
+				foreach ($register_result as $register_row)
+				{
+					if (!empty($register_row['phone_mobile']) && $register_row['phone_mobile'] != '')
+						$mobile = $this->checkMobileNumber($register_row['phone_mobile'], $register_row['call_prefix']);
+					else
+						$mobile = '';
 
+					$birthday = (isset($register_row['birthday'])) ? $register_row['birthday'] : '';
+					if ($birthday > 0)
+					{
+						if ($value_langauge->date_format == 'dd-mm-yyyy')
+							$birthday = date('d-m-Y', strtotime($birthday));
+						else
+							$birthday = date('m-d-Y', strtotime($birthday));
+					}
+
+					$civility_value = (isset($register_row['id_gender'])) ? $register_row['id_gender'] : '';
+					if ($civility_value == 1)
+						$civility = 'Mr.';
+					elseif ($civility_value == 2)
+						$civility = 'Ms.';
+					elseif ($civility_value == 3)
+						$civility = 'Miss.';
+					else
+						$civility = '';
+
+					$langisocode = '';
+					if ($value_langauge->language == 'fr')
+						$register_email[] = array(
+							'EMAIL'=>$register_row['email'],
+							'CIV'=>$civility,
+							'PRENOM'=>$register_row['firstname'],
+							'NOM'=>$register_row['lastname'],
+							'DDNAISSANCE'=>$birthday,
+							'PS_LANG'=>$langisocode,
+							'CLIENT'=>1,
+							'SMS'=>$mobile
+						);
+					else
+						$register_email[] = array(
+							'EMAIL'=>$register_row['email'],
+							'CIV'=>$civility,
+							'NAME'=>$register_row['firstname'],
+							'SURNAME'=>$register_row['lastname'],
+							'BIRTHDAY'=>$birthday,
+							'PS_LANG'=>$langisocode,
+							'CLIENT'=>1,
+							'SMS'=>$mobile
+						);
+				}
+				$page++;
+				$total_page--;
+				foreach ($register_email as $line)
+					fputcsv($handle, $line);
+			}
 		}
 
 		$unregister_value = Db::getInstance()->ExecuteS('SELECT count(*) as count_value FROM '._DB_PREFIX_.'sendin_newsletter WHERE active = 1');
-		$unregister_result = Db::getInstance()->ExecuteS('SELECT email FROM '._DB_PREFIX_.'sendin_newsletter WHERE active = 1 limit '.$start.','.$end.'');
 		// registered user store in array
 		$start = 0;
-		$end = 2000;
+		$end = 1000;
 		$page = 1;
 		$total_page = Tools::ceilf($unregister_value[0]['count_value'] / $end);
 		while ($total_page > 0)
 		{
 			$register_email = array();
 			$start = ($page - 1) * $end;
-		// unregistered user store in array
-		if ($unregister_result)
-		foreach ($unregister_result as $unregister_row)
-		if ($value_langauge->language == 'fr')
-			$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'PRENOM'=>'', 'NOM'=>'', 'DDNAISSANCE'=>'', 'PS_LANG'=>'', 'CLIENT'=>0,'SMS'=>'');
-		else
-		$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'NAME'=>'', 'SURNAME'=>'', 'BIRTHDAY'=>'', 'PS_LANG'=>'','CLIENT'=>0,'SMS'=>'');
-		$page++;
-		$total_page--;
-		foreach ($register_email as $line)
-			fputcsv($handle, $line);
-
+			// unregistered user store in array
+			$unregister_result = Db::getInstance()->ExecuteS('SELECT email FROM '._DB_PREFIX_.'sendin_newsletter WHERE active = 1 limit '.$start.','.$end.'');
+			if ($unregister_result)
+				foreach ($unregister_result as $unregister_row)
+					if ($value_langauge->language == 'fr')
+						$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'PRENOM'=>'', 'NOM'=>'', 'DDNAISSANCE'=>'', 'PS_LANG'=>'', 'CLIENT'=>0,'SMS'=>'');
+					else
+						$register_email[] = array('EMAIL'=>$unregister_row['email'], 'CIV'=>'', 'NAME'=>'', 'SURNAME'=>'', 'BIRTHDAY'=>'', 'PS_LANG'=>'','CLIENT'=>0,'SMS'=>'');
+			$page++;
+			$total_page--;
+			foreach ($register_email as $line)
+				fputcsv($handle, $line);
 		}
 
 		fclose($handle);
@@ -1029,12 +1105,12 @@ class Sendinblue extends Module {
 		$lastname = $result_code['lastname'];
 		if ($result_code['id_lang'] == 1)
 			$ord_date = date('m/d/Y');
-			else
+		else
 			$ord_date = date('d/m/Y');
 		if (version_compare(_PS_VERSION_, '1.5', '<'))
 			$characters = '1234567890';
 		else
-		$characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+			$characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 		$ref_num = '';
 		for ($i = 0; $i < 9; $i++)
@@ -1055,7 +1131,6 @@ class Sendinblue extends Module {
 
 		if (isset($result->status) && $result->status == 'OK')
 			return true;
-		else
 		return false;
 	}
 
@@ -1079,11 +1154,11 @@ class Sendinblue extends Module {
 		$lastname = $result_code['lastname'];
 		if ($result_code['id_lang'] == 1)
 			$ord_date = date('m/d/Y');
-			else
+		else
 			$ord_date = date('d/m/Y');
 		if (version_compare(_PS_VERSION_, '1.5', '<'))
 			$characters = '1234567890';
-			else
+		else
 			$characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 		$ref_num = '';
@@ -1104,7 +1179,6 @@ class Sendinblue extends Module {
 
 		if (isset($result->status) && $result->status == 'OK')
 			return true;
-		else
 		return false;
 	}
 
@@ -1152,9 +1226,7 @@ class Sendinblue extends Module {
 
 		if (isset($result->status) && $result->status == 'OK')
 			return true;
-		else
 		return false;
-		exit();
 	}
 
 	/**
@@ -1199,7 +1271,7 @@ class Sendinblue extends Module {
 			if (isset($result->status) && $result->status == 'OK')
 				return $this->redirectPage($this->l('Message has been sent successfully'), 'SUCCESS');
 			else
-			return $this->redirectPage($this->l('Message has not been sent successfully'), 'ERROR');
+				return $this->redirectPage($this->l('Message has not been sent successfully'), 'ERROR');
 		}
 	}
 
@@ -1252,7 +1324,7 @@ class Sendinblue extends Module {
 				}
 			}
 		}
-			return $this->redirectPage($this->l('Message has been sent successfully'), 'SUCCESS');
+		return $this->redirectPage($this->l('Message has been sent successfully'), 'SUCCESS');
 	}
 
 	/**
@@ -1268,7 +1340,7 @@ class Sendinblue extends Module {
 			$camp_name = 'SMS_'.date('Ymd');
 			$key = Configuration::get('Sendin_Api_Key');
 			if ($key == '')
-			return false;
+				return false;
 			$param = array();
 			$param['key'] = $key;
 			$param['listname'] = $camp_name;
@@ -1315,7 +1387,7 @@ class Sendinblue extends Module {
 			$result = $this->curlRequest($arr);
 			$data = Tools::jsondecode($result);
 			if (!empty($data->errorMsg))
-			return $this->redirectPage($this->l($data->errorMsg), 'ERROR');
+				return $this->redirectPage($this->l($data->errorMsg), 'ERROR');
 		}
 		return $this->redirectPage($this->l('Message has been sent successfully'), 'SUCCESS');
 	}
@@ -1423,7 +1495,7 @@ class Sendinblue extends Module {
 		$sms_credit = $this->curlRequest($data);
 		$result = Tools::jsonDecode($sms_credit);
 		if ($result['1']->plan_type == 'SMS')
-		return $result['1']->credits;
+			return $result['1']->credits;
 	}
 
 	/**
@@ -1561,7 +1633,7 @@ class Sendinblue extends Module {
 					$this->redirectPage($this->l('Mail not sent'), 'ERROR');
 			}
 			else
-			$this->redirectPage($this->l('Your SMTP account is not activated and therefore you can\'t use SendinBlue SMTP. For more informations, Please contact our support to: contact@sendinblue.com'), 'ERROR');
+				$this->redirectPage($this->l('Your SMTP account is not activated and therefore you can\'t use SendinBlue SMTP. For more informations, Please contact our support to: contact@sendinblue.com'), 'ERROR');
 		}
 		else
 			$this->redirectPage($this->l('Your SMTP account is not activated and therefore you can\'t use SendinBlue SMTP. For more informations, Please contact our support to: contact@sendinblue.com'), 'ERROR');
@@ -2143,44 +2215,85 @@ class Sendinblue extends Module {
 			$birthday = (isset($customer_data[0]['birthday'])) ? $customer_data[0]['birthday'] : '';
 
 			if ($value_langauge->date_format == 'dd-mm-yyyy')
-			$birthday = date('d-m-Y', strtotime($birthday));
+				$birthday = date('d-m-Y', strtotime($birthday));
 			else
-			$birthday = date('m-d-Y', strtotime($birthday));
+				$birthday = date('m-d-Y', strtotime($birthday));
 
 			$civility_value = (isset($customer_data[0]['id_gender'])) ? $customer_data[0]['id_gender'] : '';
 			if ($civility_value == 1)
-			$civility = 'Mr.';
+				$civility = 'Mr.';
 			elseif ($civility_value == 2)
-			$civility = 'Ms.';
+				$civility = 'Ms.';
 			elseif ($civility_value == 3)
-			$civility = 'Miss.';
+				$civility = 'Miss.';
 			else
-			$civility = '';
+				$civility = '';
 
 			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
-			$iso_code = Language::getIsoById( (int)$customer_data[0]['id_lang']);
+				$iso_code = Language::getIsoById( (int)$customer_data[0]['id_lang']);
 			else
-			$iso_code = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
-				WHERE `id_lang` = \''.(int)$customer_data[0]['id_lang'].'\'');
-
-			$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$birthday.'|'.$client;
+				$iso_code = '';
 		}
-		$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$birthday.'|'.$iso_code.'|'.$client;
+
+		$attribute_data = array();
+		$attribute_key = array();
+		if (!empty($civility))
+		{
+			$attribute_data[] = $civility;
+			$attribute_key[] = 'CIV';
+		}
+		if (!empty($fname))
+		{
+			$attribute_data[] = $fname;
+			if ($value_langauge->language == 'fr')
+				$attribute_key[] = 'PRENOM';
+			else
+				$attribute_key[] = 'NAME';
+		}
+		if (!empty($lname))
+		{
+			$attribute_data[] = $lname;
+			if ($value_langauge->language == 'fr')
+				$attribute_key[] = 'NOM';
+			else
+				$attribute_key[] = 'SURNAME';
+		}
+		if (!empty($birthday))
+		{
+			$attribute_data[] = $birthday;
+			if ($value_langauge->language == 'fr')
+				$attribute_key[] = 'DDNAISSANCE';
+			else
+				$attribute_key[] = 'BIRTHDAY';
+		}
+		if (!empty($iso_code))
+		{
+			$attribute_data[] = $iso_code;
+			if ($value_langauge->language == 'fr')
+				$attribute_key[] = 'PS_LANG';
+			else
+				$attribute_key[] = 'PS_LANG';
+		}
+
+		if ($client >= 0)
+		{
+			$attribute_data[] = $client;
+			$attribute_key[] = 'CLIENT';
+		}
+		$attribute_data = implode('|', $attribute_data);
+		$attribute = $attribute_data;
 		$data = array();
 		$data['key'] = trim(Configuration::get('Sendin_Api_Key'));
 		$data['webaction'] = 'USERCREADITM';
-		if ($post_value != '')
-		$data['blacklisted'] = 0;
+		if ($post_value == 0 || $post_value == 1)
+			$data['blacklisted'] = 0;
 
-		if ($value_langauge->language == 'fr')
-		$data['attributes_name'] = 'CIV|PRENOM|NOM|DDNAISSANCE|PS_LANG|CLIENT';
-		else
-		$data['attributes_name'] = 'CIV|NAME|SURNAME|BIRTHDAY|PS_LANG|CLIENT';
+		$attribute_key = implode('|', $attribute_key);
+		$data['attributes_name'] = $attribute_key;
 		$data['attributes_value'] = $attribute;
 		$data['category'] = '';
 		$data['email'] = $email;
 		$data['listid'] = Configuration::get('Sendin_Selected_List_Data');
-
 		return $this->curlRequest($data);
 	}
 
@@ -2195,43 +2308,90 @@ class Sendinblue extends Module {
 		$value_langauge = $this->getApiConfigValue();
 		$birthday = (isset($birthday))?$birthday : '';
 
-			if ($value_langauge->date_format == 'dd-mm-yyyy')
-				$dateof_birth = date('d-m-Y', strtotime($birthday));
-				else
-				$dateof_birth = date('m-d-Y', strtotime($birthday));
+		if ($value_langauge->date_format == 'dd-mm-yyyy')
+			$dateof_birth = date('d-m-Y', strtotime($birthday));
+		else
+			$dateof_birth = date('m-d-Y', strtotime($birthday));
 
 		$client = 1;
 		$civility_value = (isset($id_gender))?$id_gender : '';
 		if ($civility_value == 1)
-		$civility = 'Mr.';
+			$civility = 'Mr.';
 		elseif ($civility_value == 2)
-		$civility = 'Ms.';
+			$civility = 'Ms.';
 		elseif ($civility_value == 3)
-		$civility = 'Miss.';
+			$civility = 'Miss.';
 		else
-		$civility = '';
+			$civility = '';
 
 		if ($langisocode != '')
 		{
 			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
 				$langisocode = Language::getIsoById( (int)$langisocode);
-				else
+			else
 				$langisocode = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
 					WHERE `id_lang` = \''.(int)$langisocode.'\'');
 		}
 
-		$attribute = $civility.'|'.$fname.'|'.$lname.'|'.$dateof_birth.'|'.$langisocode.'|'.$client.'|'.$phone_mobile;
+		$attribute_data = array();
+		$attribute_key = array();
+		if ($civility != '')
+		{
+			$attribute_data[] = $civility;
+			$attribute_key[] = 'CIV';
+		}
+		if (!empty($fname))
+		{
+			$attribute_data[] = $fname;
+			if ($value_langauge->language == 'fr')
+				$attribute_key[] = 'PRENOM';
+			else
+				$attribute_key[] = 'NAME';
+		}
+		if (!empty($lname))
+		{
+			$attribute_data[] = $lname;
+			if ($value_langauge->language == 'fr')
+				$attribute_key[] = 'NOM';
+			else
+				$attribute_key[] = 'SURNAME';
+		}
+		if (!empty($dateof_birth))
+		{
+			$attribute_data[] = $dateof_birth;
+			if ($value_langauge->language == 'fr')
+				$attribute_key[] = 'DDNAISSANCE';
+			else
+				$attribute_key[] = 'BIRTHDAY';
+		}
+		if (!empty($langisocode))
+		{
+			$attribute_data[] = $langisocode;
+			$attribute_key[] = 'PS_LANG';
+		}
+		if ($client >= 0)
+		{
+			$attribute_data[] = $client;
+			$attribute_key[] = 'CLIENT';
+		}
+		if (!empty($phone_mobile))
+		{
+			$attribute_data[] = $phone_mobile;
+			$attribute_key[] = 'SMS';
+		}
+
+		$attribute_data = implode('|', $attribute_data);
+		$attribute = $attribute_data;
 		$data = array();
 		$data['key'] = trim(Configuration::get('Sendin_Api_Key'));
 		$data['webaction'] = 'USERCREADITM';
 		$data['email'] = $email;
-		if ($newsletter_status != '')
-		$data['blacklisted'] = 0;
+		if ($newsletter_status == 0 || $newsletter_status == 1)
+			$data['blacklisted'] = 0;
 
-		if ($value_langauge->language == 'fr')
-		$data['attributes_name'] = 'CIV|PRENOM|NOM|DDNAISSANCE|PS_LANG|CLIENT|SMS';
-		else
-		$data['attributes_name'] = 'CIV|NAME|SURNAME|BIRTHDAY|PS_LANG|CLIENT|SMS';
+		$attribute_key = implode('|', $attribute_key);
+		$data['attributes_name'] = $attribute_key;
+
 		$data['attributes_value'] = $attribute;
 		$data['category'] = '';
 		$data['listid'] = Configuration::get('Sendin_Selected_List_Data');
@@ -2245,10 +2405,20 @@ class Sendinblue extends Module {
 	*/
 	private function isEmailRegistered($customer_email, $mobile_number, $newsletter_status)
 	{
-		if (Db::getInstance()->getRow('SELECT `email` FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($customer_email).'\''))
-			$this->subscribeByruntime($customer_email, $newsletter_status);
-		elseif ($registered = Db::getInstance()->getRow('SELECT id_gender, firstname, lastname, birthday, id_lang FROM '._DB_PREFIX_.'customer WHERE `email` = \''.pSQL($customer_email).'\''))
-			$this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], $registered['id_lang'], $mobile_number, $newsletter_status);
+		if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+		{
+			if (Db::getInstance()->getRow('SELECT `email` FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($customer_email).'\''))
+				$this->subscribeByruntime($customer_email, $newsletter_status);
+			elseif ($registered = Db::getInstance()->getRow('SELECT id_gender, firstname, lastname, birthday, id_lang FROM '._DB_PREFIX_.'customer WHERE `email` = \''.pSQL($customer_email).'\''))
+				$this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], $registered['id_lang'], $mobile_number, $newsletter_status);
+		}
+		else
+		{
+			if (Db::getInstance()->getRow('SELECT `email` FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($customer_email).'\''))
+				$this->subscribeByruntime($customer_email, $newsletter_status);
+			elseif ($registered = Db::getInstance()->getRow('SELECT id_gender, firstname, lastname, birthday FROM '._DB_PREFIX_.'customer WHERE `email` = \''.pSQL($customer_email).'\''))
+				$this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], '', $mobile_number, $newsletter_status);
+		}
 	}
 
 	/**
@@ -2288,7 +2458,7 @@ class Sendinblue extends Module {
 		<div id="div_order_track">
 		<input type ="hidden" name="importmsg" id="importmsg" value="'.$this->l('Order history has been import successfully').'">
 		<p style="text-align:center">'.'<a href="javascript:void(0);" id="importOrderTrack" class="button">
-			'.$this->l('Import the data of previous orders').'</a>                            
+			'.$this->l('Import the data of previous orders').'</a>
 		</div>
 		</td></tr></form></table>';
 		return $this->html_code_tracking;
@@ -2324,7 +2494,7 @@ class Sendinblue extends Module {
 			&nbsp;</span>
 			</td>
 			</tr>';
-			$this->_second_block_code .= '<tr class="managesubscribeBlock">
+		$this->_second_block_code .= '<tr class="managesubscribeBlock">
 			<td><label>'.$this->l('Manage unsubscription from Front-Office').'</label>
 			</td>
 			<td class="'.$this->cl_version.'">
@@ -2339,54 +2509,54 @@ class Sendinblue extends Module {
 			title="'.$this->l('If you activate this option, you will let your customers the possibility to unsubscribe from your newsletter using the newsletter block displayed in the home page.').'">&nbsp;</span>
 			</td>
 			</tr>';
-			$this->_second_block_code .= '<tr class="managesubscribeBlock">'.$this->parselist().'</tr>';
-			$this->_second_block_code .= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
+		$this->_second_block_code .= '<tr class="managesubscribeBlock">'.$this->parselist().'</tr>';
+		$this->_second_block_code .= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
 			<td>
 			</td>
 			</tr>';
-			$this->_second_block_code .= '<td style="width:250px" class="managesubscribeBlock">
+		$this->_second_block_code .= '<td style="width:250px" class="managesubscribeBlock">
 			<label> '.$this->l('Manage follow up email for user subscription').'
 			</label>
 			</td>
 			<td class="'.$this->cl_version.' managesubscribeBlock"><div class="listData" style="text-align:left;"><select name="template" class="ui-state-default" style="width: 225px; height:22px; border-radius:4px; margin-right:5px;"><option value="">'.$this->l('Select Template').'</option>
 			';
-			$options = '';
-			$camp = $this->templateDisplay();
-			if (!empty($camp->result->campaign_records))
+		$options = '';
+		$camp = $this->templateDisplay();
+		if (!empty($camp->result->campaign_records))
+		{
+			foreach ($camp->result->campaign_records as $template_data)
 			{
-				foreach ($camp->result->campaign_records as $template_data)
+				if ($template_data->templ_status === 'Active')
 				{
-					if ($template_data->templ_status === 'Active')
-					{
-						$options .= '<option value="'.$template_data->id.'"';
-						if ($template_data->id == Configuration::get('Sendin_Template_Id'))
+					$options .= '<option value="'.$template_data->id.'"';
+					if ($template_data->id == Configuration::get('Sendin_Template_Id'))
 						$options .= 'selected="selected"';
 
-						$options .= '>'.$template_data->campaign_name.'</option>';
-					}
+					$options .= '>'.$template_data->campaign_name.'</option>';
 				}
 			}
-			$this->_second_block_code .= $options.'</select><span class="toolTip"
+		}
+		$this->_second_block_code .= $options.'</select><span class="toolTip"
 			title="'.$this->l('Select a SendinBlue template that will be sent personalized for each contact that subscribes to your newsletter').'"
 			&nbsp;</span></div>
 			</td>
 			</tr>';
-			$this->_second_block_code .= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
+		$this->_second_block_code .= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
 			<td colspan="2">
 			<input type="submit" name="submitForm2" value="'.$this->l('Update').'" class="button" />&nbsp;
 			</td>
 			</tr><tr class="managesubscribeBlock"><td>&nbsp;</td><td colspan="2">';
-			$data = '';
-			if (Configuration::get('Sendin_import_user_status') == 1)
-				$data .= '<input type="submit" name="submitUpdateImport" value="'.$this->l('Import Old Subscribers').'" class="button" />&nbsp;</form>';
-			$this->_second_block_code .= $data.'</td>
+		$data = '';
+		if (Configuration::get('Sendin_import_user_status') == 1)
+			$data .= '<input type="submit" name="submitUpdateImport" value="'.$this->l('Import Old Subscribers').'" class="button" />&nbsp;</form>';
+		$this->_second_block_code .= $data.'</td>
 			</tr><tr class="managesubscribeBlock" ><td colspan="3" class="'.$this->cl_version.'">'.$this->l('To synchronize the emails of your customers from SendinBlue platform to your e-commerce website, you should run').'
 			<a target="_blank" href="'.$this->local_path.'sendinblue/cron.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">
 			'.$this->l('this link').'</a> ';
-			$this->_second_block_code .= $this->l('each day.').'
+		$this->_second_block_code .= $this->l('each day.').'
 			<span class="toolTip" title="'.$this->l('Note that if you change the name of your Shop (currently ').Configuration::get('PS_SHOP_NAME').$this->l(') the token value changes.').'">&nbsp;</span></td></tr></table>';
 
-			return $this->_second_block_code;
+		return $this->_second_block_code;
 	}
 
 	/**
@@ -2403,19 +2573,18 @@ class Sendinblue extends Module {
 			</tr>
 			</thead>';
 
-		$this->_html_smtp_tracking .= '
-		<tr><td><form method="post" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
-		<label>
-		'.$this->l('Activate SendinBlue SMTP for your transactional emails').'
-	</label><span class="'.$this->cl_version.'">
-		<input type="radio" class="smtptestclick radio_nospaceing" id="yessmtp"
-		name="smtp"
-		value="1" '.(Configuration::get('Sendin_Api_Smtp_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
-		<input type="radio" class="smtptestclick radio_spaceing2" id="nosmtp"
-		name="smtp" value="0"
-		'.(! Configuration::get('Sendin_Api_Smtp_Status') ? 'checked="checked" ' : '').'/>'.$this->l('No').'
-		<span class="toolTip" title="'.$this->l('Transactional email is an expected email because it is triggered automatically after a transaction or a specific event. Common examples of transactional email are : account opening and welcome message, order shipment confirmation, shipment tracking and purchase order status, registration via a contact form, account termination, payment confirmation, invoice etc.').'">&nbsp;</span>
-		</form></td></tr>';
+		$this->_html_smtp_tracking .= '<tr><td><form method="post" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
+			<label>
+			'.$this->l('Activate SendinBlue SMTP for your transactional emails').'
+			</label><span class="'.$this->cl_version.'">
+			<input type="radio" class="smtptestclick radio_nospaceing" id="yessmtp"
+			name="smtp"
+			value="1" '.(Configuration::get('Sendin_Api_Smtp_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
+			<input type="radio" class="smtptestclick radio_spaceing2" id="nosmtp"
+			name="smtp" value="0"
+			'.(! Configuration::get('Sendin_Api_Smtp_Status') ? 'checked="checked" ' : '').'/>'.$this->l('No').'
+			<span class="toolTip" title="'.$this->l('Transactional email is an expected email because it is triggered automatically after a transaction or a specific event. Common examples of transactional email are : account opening and welcome message, order shipment confirmation, shipment tracking and purchase order status, registration via a contact form, account termination, payment confirmation, invoice etc.').'">&nbsp;</span>
+			</form></td></tr>';
 
 		if (Configuration::get('Sendin_Api_Smtp_Status'))
 			$st = '';
@@ -2423,15 +2592,15 @@ class Sendinblue extends Module {
 			$st = 'style="display:none;"';
 
 		$this->_html_smtp_tracking .= '
-		<form method="post" name="smtp" id="smtp" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
-		<tr id="smtptest" '.$st.' ><td colspan="2">
-		<div id="div_email_test">
-		<p style="text-align:center">'.$this->l('Send email test From / To').' :&nbsp;
-		<input type="text" size="40" name="testEmail" value="'.Configuration::get('PS_SHOP_EMAIL').'" id="email_from">
-		&nbsp;
-		<input type="submit"  class="button" value="'.$this->l('Send').'" name="sendTestMail" id="sendTestMail"></p>
-		</div>
-		</td></tr></form></table>';
+			<form method="post" name="smtp" id="smtp" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
+			<tr id="smtptest" '.$st.' ><td colspan="2">
+			<div id="div_email_test">
+			<p style="text-align:center">'.$this->l('Send email test From / To').' :&nbsp;
+			<input type="text" size="40" name="testEmail" value="'.Configuration::get('PS_SHOP_EMAIL').'" id="email_from">
+			&nbsp;
+			<input type="submit"  class="button" value="'.$this->l('Send').'" name="sendTestMail" id="sendTestMail"></p>
+			</div>
+			</td></tr></form></table>';
 
 		return $this->_html_smtp_tracking;
 	}
@@ -2477,45 +2646,43 @@ class Sendinblue extends Module {
 	private function displayBankWire()
 	{
 		$this->_html .= '<img src="'.$this->local_path.'sendinblue/img/'.$this->l('sendinblue.png').'"
-		style="float:left; margin:0px 15px 30px 0px;"><div style="float:left;
-		font-weight:bold; padding:25px 0px 0px 0px; color:#268CCD;">'.
-		$this->l('SendinBlue : THE all-in-one plugin for your marketing and transactional emails.').'</div>
-		<div class="clear"></div>';
+			style="float:left; margin:0px 15px 30px 0px;"><div style="float:left;
+			font-weight:bold; padding:25px 0px 0px 0px; color:#268CCD;">'.
+			$this->l('SendinBlue : THE all-in-one plugin for your marketing and transactional emails.').'</div>
+			<div class="clear"></div>';
 	}
 
 	private function displaySendin()
 	{
 		$this->_html .= $this->displayBankWire();
 		if ($this->checkOlderVesion() == 1)
-		$this->_html .= '<div class="module_error alert error">'.$this->l('We notified that you are using the previous version of our plugin, please uninstall it / remove it and keep only the latest version of SendinBlue').'</div>';
-		$this->_html .= '
-		<fieldset>
-		<legend><img src="'.$this->local_path.$this->name.'/logo.gif" alt="" /> '.$this->l('SendinBlue').'</legend>
-		<div style="float: right; width: 340px; height: 205px; border: dashed 1px #666; padding: 8px; margin-left: 12px; margin-top:-15px;">
-		<h2 style="color:#268CCD;">'.$this->l('Contact SendinBlue Team').'</h2>
-		<div style="clear: both;"></div>
-		<p>'.$this->l(' Contact us :
-').'<br /><br />'.$this->l('Email : ').'<a href="mailto:'.$this->l('contact@sendinblue.com').'" style="color:#268CCD;">'.
-$this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61').'</p>
-		<p style="padding-top:20px;"><b>'.$this->l('For further informations, please visit our website:').
-		'</b><br /><a href="'.$this->l('https://www.sendinblue.com').'" target="_blank"
-		style="color:#268CCD;">'.$this->l('https://www.sendinblue.com').'</a></p>
-		</div>
-		<p>'.$this->l('With the SendinBlue plugin, you can find everything you need to easily and efficiently send your email & SMS campaigns to your prospects and customers. ').'</p>
-		<ul class="listt">
-			<li>'.$this->l(' Synchronize your subscribers with SendinBlue (subscribed and unsubscribed contacts)').'</li>
-			<li>'.$this->l(' Easily create good looking emailings').'</li>
-			<li>'.$this->l(' Schedule your campaigns').'</li>
-			<li>'.$this->l(' Track your results and optimize').'</li>
-			<li>'.$this->l(' Monitor your transactional emails (purchase confirmation, password reset, etc) with a better deliverability and real-time analytics').'</li>
-		</ul>
-		<b>'.$this->l('Why should you use SendinBlue ?').'</b>
-		<ul class="listt">
-			<li>'.$this->l(' Optimized deliverability').'</li>
-			<li>'.$this->l(' Unbeatable pricing – best value in the industry').'</li>
-			<li>'.$this->l(' Technical support, by phone or by email').'</li>
-		</ul><div style="clear:both;">&nbsp;</div>
-		</fieldset>';
+			$this->_html .= '<div class="module_error alert error">'.$this->l('We notified that you are using the previous version of our plugin, please uninstall it / remove it and keep only the latest version of SendinBlue').'</div>';
+		$this->_html .= '<fieldset>
+			<legend><img src="'.$this->local_path.$this->name.'/logo.gif" alt="" /> '.$this->l('SendinBlue').'</legend>
+			<div style="float: right; width: 340px; height: 205px; border: dashed 1px #666; padding: 8px; margin-left: 12px; margin-top:-15px;">
+			<h2 style="color:#268CCD;">'.$this->l('Contact SendinBlue Team').'</h2>
+			<div style="clear: both;"></div>
+			<p>'.$this->l(' Contact us :').'<br /><br />'.$this->l('Email : ').'<a href="mailto:'.$this->l('contact@sendinblue.com').'" style="color:#268CCD;">'.
+			$this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61').'</p>
+			<p style="padding-top:20px;"><b>'.$this->l('For further informations, please visit our website:').
+			'</b><br /><a href="'.$this->l('https://www.sendinblue.com').'" target="_blank"
+			style="color:#268CCD;">'.$this->l('https://www.sendinblue.com').'</a></p>
+			</div>
+			<p>'.$this->l('With the SendinBlue plugin, you can find everything you need to easily and efficiently send your email & SMS campaigns to your prospects and customers. ').'</p>
+			<ul class="listt">
+				<li>'.$this->l(' Synchronize your subscribers with SendinBlue (subscribed and unsubscribed contacts)').'</li>
+				<li>'.$this->l(' Easily create good looking emailings').'</li>
+				<li>'.$this->l(' Schedule your campaigns').'</li>
+				<li>'.$this->l(' Track your results and optimize').'</li>
+				<li>'.$this->l(' Monitor your transactional emails (purchase confirmation, password reset, etc) with a better deliverability and real-time analytics').'</li>
+			</ul>
+			<b>'.$this->l('Why should you use SendinBlue ?').'</b>
+			<ul class="listt">
+				<li>'.$this->l(' Optimized deliverability').'</li>
+				<li>'.$this->l(' Unbeatable pricing – best value in the industry').'</li>
+				<li>'.$this->l(' Technical support, by phone or by email').'</li>
+			</ul><div style="clear:both;">&nbsp;</div>
+			</fieldset>';
 	}
 
 	/**
@@ -2544,30 +2711,30 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 			'</label>';
 
 		$this->_html .= '</fieldset>
-		<form method="post" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
-		<input type ="hidden" name="customtoken" id="customtoken" value="'.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">
-		<input type ="hidden" name="langvalue" id="langvalue" value="'.$this->context->language->id.'">
-		<input type ="hidden" name="page_no" id="page_no" value="1"><fieldset style="position:relative;" class="form-display">';
+			<form method="post" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
+			<input type ="hidden" name="customtoken" id="customtoken" value="'.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'">
+			<input type ="hidden" name="langvalue" id="langvalue" value="'.$this->context->language->id.'">
+			<input type ="hidden" name="page_no" id="page_no" value="1"><fieldset style="position:relative;" class="form-display">';
 		$this->_html .= '<legend>
-		<img src="'.$this->_path.'logo.gif" />'.$this->l('Settings').'</legend>
-		<label>'.$this->l('Activate the SendinBlue module').'</label><div class="margin-form" style="padding-top:5px">
-		<input type="radio" id="y" class="keyyes radio_spaceing"
-		 name="status" value="1"
-		'.(Configuration::get('Sendin_Api_Key_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
-		<input type="radio"  id="n" class="keyyes radio_spaceing2"
-		 name="status" value="0"
-		'.(! Configuration::get('Sendin_Api_Key_Status') ? 'checked="checked" ' : '').'/>'.$this->l('No').'
-		</div><div class="clear"></div>';
+			<img src="'.$this->_path.'logo.gif" />'.$this->l('Settings').'</legend>
+			<label>'.$this->l('Activate the SendinBlue module').'</label><div class="margin-form" style="padding-top:5px">
+			<input type="radio" id="y" class="keyyes radio_spaceing"
+			 name="status" value="1"
+			'.(Configuration::get('Sendin_Api_Key_Status') ? 'checked="checked" ' : '').'/>'.$this->l('Yes').'
+			<input type="radio"  id="n" class="keyyes radio_spaceing2"
+			 name="status" value="0"
+			'.(! Configuration::get('Sendin_Api_Key_Status') ? 'checked="checked" ' : '').'/>'.$this->l('No').'
+			</div><div class="clear"></div>';
 		$this->_html .= '<div id="apikeybox"  '.$str.' ><label class="key">'.$this->l('API key').'</label>
-		<div class="margin-form key">
-		<input type="text" name="apikey" id="apikeys" value="'.Tools::safeOutput(Configuration::get('Sendin_Api_Key')).'" />&nbsp;
-		<span class="toolTip"
-		title="'.$this->l('Please enter your API key from your SendinBlue account and if you don\'t have it yet, please go to www.sendinblue.com and subscribe. You can then get the API key from https://my.sendinblue.com/advanced/apikey').'">
-		&nbsp;</span>
-		</div></div>';
+			<div class="margin-form key">
+			<input type="text" name="apikey" id="apikeys" value="'.Tools::safeOutput(Configuration::get('Sendin_Api_Key')).'" />&nbsp;
+			<span class="toolTip"
+			title="'.$this->l('Please enter your API key from your SendinBlue account and if you don\'t have it yet, please go to www.sendinblue.com and subscribe. You can then get the API key from https://my.sendinblue.com/advanced/apikey').'">
+			&nbsp;</span>
+			</div></div>';
 		$this->_html .= '<div class="margin-form clear pspace">
-		<input type="submit" name="submitUpdate" value="'.$this->l('Update').'" class="button" />&nbsp;
-		</div><div class="clear"></div></fieldset></form>';
+			<input type="submit" name="submitUpdate" value="'.$this->l('Update').'" class="button" />&nbsp;
+			</div><div class="clear"></div></fieldset></form>';
 
 		if (Configuration::get('Sendin_Api_Key_Status') == 1)
 		{
@@ -2829,9 +2996,9 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 			if (Tools::strtolower($firstname) === Tools::strtolower($customer_civility_result[0]['firstname']) && Tools::strtolower
 			($lastname) === Tools::strtolower($customer_civility_result[0]['lastname']))
-			$civility_value = (isset($customer_civility_result['0']['id_gender'])) ? $customer_civility_result['0']['id_gender'] : '';
+				$civility_value = (isset($customer_civility_result['0']['id_gender'])) ? $customer_civility_result['0']['id_gender'] : '';
 			else
-			$civility_value = '';
+				$civility_value = '';
 
 			if ($civility_value == 1)
 				$civility = 'Mr.';
@@ -2851,17 +3018,17 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 			{
 				$order_date = (isset($order->date_upd)) ? $order->date_upd : 0;
 				if ($this->context->language->id == 1)
-				$ord_date = date('m/d/Y', strtotime($order_date));
+					$ord_date = date('m/d/Y', strtotime($order_date));
 				else
-				$ord_date = date('d/m/Y', strtotime($order_date));
+					$ord_date = date('d/m/Y', strtotime($order_date));
 
 				$msgbody = Configuration::get('Sendin_Sender_Shipment_Message');
 				$total_pay = (isset($order->total_paid)) ? $order->total_paid : 0;
 				$total_pay = $total_pay.''.$this->context->currency->iso_code;
 				if (_PS_VERSION_ < '1.5.0.0')
-				$ref_num = (isset($order->id)) ? $order->id : '';
+					$ref_num = (isset($order->id)) ? $order->id : '';
 				else
-				$ref_num = (isset($order->reference)) ? $order->reference : '';
+					$ref_num = (isset($order->reference)) ? $order->reference : '';
 
 				$civility_data = str_replace('{civility}', $civility, $msgbody);
 				$fname = str_replace('{first_name}', $firstname, $civility_data);
@@ -3100,7 +3267,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 	*/
 	public function hookcreateAccountForm($params)
 	{
-	if (!$this->syncSetting())
+		if (!$this->syncSetting())
 			return false;
 
 		$this->context->smarty->assign('params', $params);
@@ -3167,9 +3334,9 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 
 				$order_date = (isset($params['objOrder']->date_upd)) ? $params['objOrder']->date_upd : 0;
 				if ($this->context->language->id == 1)
-				$ord_date = date('m/d/Y', strtotime($order_date));
+					$ord_date = date('m/d/Y', strtotime($order_date));
 				else
-				$ord_date = date('d/m/Y', strtotime($order_date));
+					$ord_date = date('d/m/Y', strtotime($order_date));
 				$firstname = (isset($address_delivery[0]['firstname'])) ? $address_delivery[0]['firstname'] : '';
 				$lastname  = (isset($address_delivery[0]['lastname'])) ? $address_delivery[0]['lastname'] : '';
 
@@ -3307,25 +3474,22 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		{
 			if (preg_match('/^0'.$call_prefix.'/', $number))
 				return '00'.Tools::substr($number, 1);
-			else
 			return '00'.$call_prefix.Tools::substr($number, 1);
 		}
 		elseif ($chartwo == '00')
 		{
-		if (preg_match('/^00'.$call_prefix.'/', $number))
-			return $number;
-		else
-		return '00'.$call_prefix.Tools::substr($number, 2);
+			if (preg_match('/^00'.$call_prefix.'/', $number))
+				return $number;
+			return '00'.$call_prefix.Tools::substr($number, 2);
 		}
 		elseif ($charone == '+')
 		{
-		if (preg_match('/^\+'.$call_prefix.'/', $number))
-			return '00'.Tools::substr($number, 1);
-		else
-		return '00'.$call_prefix.Tools::substr($number, 1);
+			if (preg_match('/^\+'.$call_prefix.'/', $number))
+				return '00'.Tools::substr($number, 1);
+			return '00'.$call_prefix.Tools::substr($number, 1);
 		}
 		elseif ($charone != '0')
-		return '00'.$call_prefix.$number;
+			return '00'.$call_prefix.$number;
 	}
 
 	/**
@@ -3369,8 +3533,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 			$module_status = Db::getInstance()->getRow('select COUNT(*) totalvalue FROM `'._DB_PREFIX_.'module`  WHERE name ="mailin" || name ="mailinblue"');
 			if ($module_status['totalvalue'] > 0)
 				return 1;
-			else
-				return 0;
+			return 0;
 		}
 		else
 		{
@@ -3380,8 +3543,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 			$data_second = !empty($module_newsletter_second->active)?$module_newsletter_second->active : '0';
 			if ($data_first == 1 || $data_second == 1)
 				return 1;
-			else
-				return 0;
+			return 0;
 		}
 	}
 	public function updateSmsSendinStatus()
@@ -3398,6 +3560,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$this->curlRequest($data);
 
 	}
+
 	/**
 	* Fetches all the subscribers of PrestaShop and adds them to the SendinBlue database for SMS campaign.
 	*/
@@ -3426,17 +3589,17 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 					if ($value_langauge->date_format == 'dd-mm-yyyy')
 						$birthday = date('d-m-Y', strtotime($birthday));
 					else
-					$birthday = date('m-d-Y', strtotime($birthday));
+						$birthday = date('m-d-Y', strtotime($birthday));
 
 					$civility_value = (isset($register_row['id_gender'])) ? $register_row['id_gender'] : '';
 					if ($civility_value == 1)
 						$civility = 'Mr.';
 					elseif ($civility_value == 2)
-					$civility = 'Ms.';
+						$civility = 'Ms.';
 					elseif ($civility_value == 3)
-					$civility = 'Miss.';
+						$civility = 'Miss.';
 					else
-					$civility = '';
+						$civility = '';
 
 					if ($value_langauge->language == 'fr')
 						$register_email[] = array(
@@ -3449,19 +3612,20 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 							'SMS'=>$mobile
 						);
 					else
-					$register_email[] = array(
-						'EMAIL'=>$register_row['email'],
-						'CIV'=>$civility,
-						'NAME'=>$register_row['firstname'],
-						'SURNAME'=>$register_row['lastname'],
-						'BIRTHDAY'=>$birthday,
-						'CLIENT'=>1,
-						'SMS'=>$mobile
+						$register_email[] = array(
+							'EMAIL'=>$register_row['email'],
+							'CIV'=>$civility,
+							'NAME'=>$register_row['firstname'],
+							'SURNAME'=>$register_row['lastname'],
+							'BIRTHDAY'=>$birthday,
+							'CLIENT'=>1,
+							'SMS'=>$mobile
 						);
 				}
 			}
 		return Tools::jsonEncode($register_email);
 	}
+
 	/**
 	* Send template email by sendinblue for newsletter subscriber user  .
 	*/
@@ -3481,20 +3645,15 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$ch = curl_init();
 
 		curl_setopt ($ch, CURLOPT_POST, 1);
-
 		curl_setopt ($ch, CURLOPT_URL, $mail_url);
-
 		curl_setopt ($ch, CURLOPT_POSTFIELDS, $post_data);
-
 		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
 
 		$return_data = curl_exec ($ch);
 
 		curl_close ($ch);
 
-		$res = Tools::jsondecode($return_data, true);
-		return $res;
-
+		return Tools::jsondecode($return_data, true);
 	}
 
 	/**
@@ -3507,9 +3666,22 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		$data['webaction'] = 'CAMPAIGNDETAIL';
 		$data['show'] = 'ALL';
 		$data['messageType'] = 'template';
-		$temp_result = $this->curlRequest($data);
-		return Tools::jsonDecode($temp_result);
+		return Tools::jsonDecode($this->curlRequest($data));
+	}
 
+	/**
+	* Return customer addresses
+	* @return array Addresses
+	*/
+	public function getCustomerAddresses($id)
+	{
+		return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('
+		SELECT a.*, cl.`name` AS country, s.name AS state, s.iso_code AS state_iso
+		FROM `'._DB_PREFIX_.'address` a
+		LEFT JOIN `'._DB_PREFIX_.'country` c ON (a.`id_country` = c.`id_country`)
+		LEFT JOIN `'._DB_PREFIX_.'country_lang` cl ON (c.`id_country` = cl.`id_country`)
+		LEFT JOIN `'._DB_PREFIX_.'state` s ON (s.`id_state` = a.`id_state`)
+		WHERE `id_customer` = '.(int)$id.' AND a.`deleted` = 0');
 	}
 
 	/**
@@ -3535,7 +3707,6 @@ class SendinblueResources
 		$configure = Tools::getValue('configure');
 		if ((!empty($configure) && $configure == 'sendinblue') || strpos($_SERVER['REQUEST_URI'], 'authentication.php') !== false || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false)
 			return true;
-		else
-			return false;
+		return false;
 	}
 }
