@@ -2269,10 +2269,7 @@ class Sendinblue extends Module {
 		if (!empty($iso_code))
 		{
 			$attribute_data[] = $iso_code;
-			if ($value_langauge->language == 'fr')
-				$attribute_key[] = 'PS_LANG';
-			else
-				$attribute_key[] = 'PS_LANG';
+			$attribute_key[] = 'PS_LANG';
 		}
 
 		if ($client >= 0)
