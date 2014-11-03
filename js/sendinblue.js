@@ -575,7 +575,7 @@ $(document).ready(
                     type: "POST",
                     async: false,
                     url: base_url + "modules/sendinblue/ajaxcall.php",
-                    data: {"email": email, "newsletter": status, "token": token},
+                    data: {"email_value": email, "newsletter_value": status, "token": token},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
