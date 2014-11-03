@@ -62,7 +62,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.1.3';
+		$this->version = '2.1.4';
 
 		parent::__construct();
 
@@ -2242,9 +2242,6 @@ class Sendinblue extends Module {
 		if (!empty($civility))
 		{
 			$attribute_data[] = $civility;
-			if ($value_langauge->language == 'fr')
-			$attribute_key[] = 'CIV';
-			else
 			$attribute_key[] = 'CIV';
 		}
 		if (!empty($fname))
@@ -2274,9 +2271,6 @@ class Sendinblue extends Module {
 		if (!empty($iso_code))
 		{
 			$attribute_data[] = $iso_code;
-			if ($value_langauge->language == 'fr')
-			$attribute_key[] = 'PS_LANG';
-			else
 			$attribute_key[] = 'PS_LANG';
 		}
 

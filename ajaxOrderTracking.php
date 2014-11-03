@@ -33,6 +33,8 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 
 $sendin = new Sendinblue();
 
+ini_set('max_execution_time', 0);
+set_time_limit(0);
 if (Configuration::get('Sendin_order_tracking_Status') == 0)
 {
 	$handle = fopen(_PS_MODULE_DIR_.'sendinblue/csv/ImportOldOrdersToSendinblue.csv', 'w+');
@@ -92,9 +94,9 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 	$import_data = array();
 	$import_data['webaction'] = 'IMPORTUSERS';
 	$import_data['key'] = Configuration::get('Sendin_Api_Key');
-	$import_data['url'] = $sendin->path.$sendin->name.'/csv/ImportOldOrdersToSendinblue.csv';
+	$import_data['url'] = $sendin->local_path.$sendin->name.'/csv/ImportOldOrdersToSendinblue.csv';
 	$import_data['listids'] = $list;
-	$import_data['notify_url'] = $sendin->path.'sendinblue/EmptyImportOldOrdersFile.php?token='.Tools::getValue('token');
+	$import_data['notify_url'] = $sendin->local_path.'sendinblue/EmptyImportOldOrdersFile.php?token='.Tools::getValue('token');
 	/**
 	* List id should be optional
 	*/
