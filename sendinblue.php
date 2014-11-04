@@ -50,6 +50,7 @@ class Sendinblue extends Module {
 
 	public $error;
 	public $_html = null;
+	public $local_path;
 
 	/**
 	* class constructor
