@@ -50,6 +50,7 @@ class Sendinblue extends Module {
 
 	public $error;
 	public $_html = null;
+	public $local_path;
 
 	/**
 	* class constructor
@@ -62,7 +63,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.1.4';
+		$this->version = '2.1.5';
 
 		parent::__construct();
 
@@ -1494,8 +1495,9 @@ class Sendinblue extends Module {
 		$data['webaction'] = 'USER-CURRENT-PLAN';
 		$sms_credit = $this->curlRequest($data);
 		$result = Tools::jsonDecode($sms_credit);
-		if ($result['1']->plan_type == 'SMS')
-			return $result['1']->credits;
+		if (is_array($result))
+			if ($result['1']->plan_type == 'SMS')
+				return $result['1']->credits;
 	}
 
 	/**
