@@ -1496,8 +1496,11 @@ class Sendinblue extends Module {
 		$data['webaction'] = 'USER-CURRENT-PLAN';
 		$sms_credit = $this->curlRequest($data);
 		$result = Tools::jsonDecode($sms_credit);
+		if (is_array($result))
+		{
 		if ($result['1']->plan_type == 'SMS')
 		return $result['1']->credits;
+		}
 	}
 
 	/**
