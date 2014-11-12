@@ -63,7 +63,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.1.5';
+		$this->version = '2.1.6';
 
 		parent::__construct();
 
@@ -182,7 +182,7 @@ class Sendinblue extends Module {
 					$customer = new CustomerCore((int)$id_customer);
 
 					// Code to get address of logged in user
-					if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+					if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
 						$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
 					else
 						$customer_address = $customer->getCustomerAddresses((int)$customer_data[0]['id_customer']);
@@ -564,7 +564,7 @@ class Sendinblue extends Module {
 			$customer = new CustomerCore((int)$id_customer);
 
 			// Code to get address of logged in user
-			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+			if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
 				$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
 			else
 				$customer_address = $this->getCustomerAddresses((int)$id_customer);
@@ -841,7 +841,7 @@ class Sendinblue extends Module {
 			$register_email = array();
 			$start = ($page - 1) * $end;
 
-		if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+		if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
 		{
 			// select only newly added users and registered user
 			$register_result = Db::getInstance()->ExecuteS('
@@ -2231,7 +2231,7 @@ class Sendinblue extends Module {
 			else
 				$civility = '';
 
-			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+			if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
 				$iso_code = Language::getIsoById( (int)$customer_data[0]['id_lang']);
 			else
 				$iso_code = '';
@@ -2325,7 +2325,7 @@ class Sendinblue extends Module {
 
 		if ($langisocode != '')
 		{
-			if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+			if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
 				$langisocode = Language::getIsoById( (int)$langisocode);
 			else
 				$langisocode = Db::getInstance()->getValue('SELECT `iso_code` FROM `'._DB_PREFIX_.'lang`
@@ -2404,7 +2404,7 @@ class Sendinblue extends Module {
 	*/
 	private function isEmailRegistered($customer_email, $mobile_number, $newsletter_status)
 	{
-		if (version_compare(_PS_VERSION_, '1.5.0.10', '>'))
+		if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
 		{
 			if (Db::getInstance()->getRow('SELECT `email` FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($customer_email).'\''))
 				$this->subscribeByruntime($customer_email, $newsletter_status);
