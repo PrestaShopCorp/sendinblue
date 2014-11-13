@@ -185,7 +185,7 @@ class Sendinblue extends Module {
 					if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
 						$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
 					else
-						$customer_address = $customer->getCustomerAddresses((int)$customer_data[0]['id_customer']);
+						$customer_address = $this->getCustomerAddresses((int)$customer_data[0]['id_customer']);
 
 					$phone_mobile = '';
 					$id_country = '';
