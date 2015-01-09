@@ -1,5 +1,5 @@
 /**
- * 2007-2014 PrestaShop
+ * 2007-2015 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -18,7 +18,7 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2014 PrestaShop SA
+ * @copyright 2007-2015 PrestaShop SA
  * @license   http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
@@ -28,6 +28,8 @@ $(document).ready(
 
 
             var token = jQuery("#customtoken").val();
+			var id_shop_group = jQuery("#id_shop_group").val();
+			var id_shop = jQuery("#id_shop").val();
 
             if (!$('#apikeybox').is(':hidden')) {
 
@@ -35,8 +37,8 @@ $(document).ready(
                     var val = $(this).val();
 
                     if (isInteger(val) || val.length == 0) {
-                        $("#sender_order").attr('maxlength', '17');
-                        $('#sender_order_text').text((17 - val.length));
+                        $("#sender_order").attr('maxlength', '11');
+                        $('#sender_order_text').text((11 - val.length));
 
                     }
                     else {
@@ -52,8 +54,8 @@ $(document).ready(
                     var val = $('#sender_order').val();
 
                     if (isInteger(val) || val.length == 0) {
-                        $("#sender_order").attr('maxlength', '17');
-                        $('#sender_order_text').text((17 - val.length));
+                        $("#sender_order").attr('maxlength', '11');
+                        $('#sender_order_text').text((11 - val.length));
 
                     }
                     else {
@@ -102,8 +104,8 @@ $(document).ready(
                     var val = $(this).val();
 
                     if (isInteger(val) || val.length == 0) {
-                        $("#sender_shipment").attr('maxlength', '17');
-                        $('#sender_shipment_text').text((17 - val.length));
+                        $("#sender_shipment").attr('maxlength', '11');
+                        $('#sender_shipment_text').text((11 - val.length));
 
                     }
                     else {
@@ -118,8 +120,8 @@ $(document).ready(
 
                     var val = $('#sender_shipment').val();
                     if (isInteger(val) || val.length == 0) {
-                        $("#sender_shipment").attr('maxlength', '17');
-                        $('#sender_shipment_text').text((17 - val.length));
+                        $("#sender_shipment").attr('maxlength', '11');
+                        $('#sender_shipment_text').text((11 - val.length));
 
                     }
                     else {
@@ -167,8 +169,8 @@ $(document).ready(
                     var val = $(this).val();
 
                     if (isInteger(val) || val.length == 0) {
-                        $("#sender_campaign").attr('maxlength', '17');
-                        $('#sender_campaign_text').text((17 - val.length));
+                        $("#sender_campaign").attr('maxlength', '11');
+                        $('#sender_campaign_text').text((11 - val.length));
 
                     }
                     else {
@@ -185,8 +187,8 @@ $(document).ready(
                     var val = $('#sender_campaign').val();
 
                     if (isInteger(val) || val.length == 0) {
-                        $("#sender_campaign").attr('maxlength', '17');
-                        $('#sender_campaign_text').text((17 - val.length));
+                        $("#sender_campaign").attr('maxlength', '11');
+                        $('#sender_campaign_text').text((11 - val.length));
                     }
                     else {
                         $("#sender_campaign").attr('maxlength', '11');
@@ -234,7 +236,7 @@ $(document).ready(
                         type: "POST",
                         async: false,
                         url: base_url + "modules/sendinblue/ajaxOrderSetting.php",
-                        data: "orderSetting=" + orderSetting + "&token=" + token + "&type=" + type,
+                        data: "orderSetting=" + orderSetting + "&token=" + token + "&type=" + type + "&id_shop_group=" + id_shop_group + "&id_shop=" + id_shop,
                         beforeSend: function() {
                             $('#ajax-busy').show();
                         },
@@ -256,7 +258,7 @@ $(document).ready(
                         type: "POST",
                         async: false,
                         url: base_url + "modules/sendinblue/ajaxOrderSetting.php",
-                        data: "shipingSetting=" + shipingSetting + "&token=" + token + "&type=" + type,
+                        data: "shipingSetting=" + shipingSetting + "&token=" + token + "&type=" + type + "&id_shop_group=" + id_shop_group + "&id_shop=" + id_shop,
                         beforeSend: function() {
                             $('#ajax-busy').show();
                         },
@@ -279,7 +281,7 @@ $(document).ready(
                         type: "POST",
                         async: false,
                         url: base_url + "modules/sendinblue/ajaxOrderSetting.php",
-                        data: "campaignSetting=" + campaignSetting + "&token=" + token + "&type=" + type,
+                        data: "campaignSetting=" + campaignSetting + "&token=" + token + "&type=" + type + "&id_shop_group=" + id_shop_group + "&id_shop=" + id_shop,
                         beforeSend: function() {
                             $('#ajax-busy').show();
                         },
@@ -363,7 +365,7 @@ $(document).ready(
                         type: "POST",
                         async: false,
                         url: base_url + "modules/sendinblue/ajaxOrderSetting.php",
-                        data: "sms_credit=" + sms_credit + "&token=" + token + "&type=" + type,
+                        data: "sms_credit=" + sms_credit + "&token=" + token + "&type=" + type + "&id_shop_group=" + id_shop_group + "&id_shop=" + id_shop,
                         beforeSend: function() {
                             $('#ajax-busy').show();
                         },
@@ -474,12 +476,11 @@ $(document).ready(
 
             $(".script").click(function() {
                 var script = jQuery(this).val();
-                var token = jQuery("#customtoken").val();
                 $.ajax({
                     type: "POST",
                     async: false,
                     url: base_url + "modules/sendinblue/ajax.php",
-                    data: {"script": script, "token": token},
+                    data: {"script": script, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
@@ -503,7 +504,7 @@ $(document).ready(
                     type: "POST",
                     async: false,
                     url: base_url + "modules/sendinblue/ajaxsmtpconfig.php",
-                    data: {"smtptest": smtptest, "token": token},
+                    data: {"smtptest": smtptest, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
@@ -537,7 +538,7 @@ $(document).ready(
                     type: "POST",
                     async: false,
                     url: base_url + "modules/sendinblue/ajaxsubscribeconfig.php",
-                    data: {"managesubscribe": managesubscribe, "token": token},
+                    data: {"managesubscribe": managesubscribe, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
@@ -575,7 +576,7 @@ $(document).ready(
                     type: "POST",
                     async: false,
                     url: base_url + "modules/sendinblue/ajaxcall.php",
-                    data: {"email_value": email, "newsletter_value": status, "token": token},
+                    data: {"email_value": email, "newsletter_value": status, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
@@ -604,7 +605,7 @@ $(document).ready(
                     type: "POST",
                     async: false,
                     url: base_url + "modules/sendinblue/ajaxSmsStatus.php",
-                    data: {"email": email,"token": token},
+                    data: {"email": email,"token": token, "id_shop_group": id_shop_group, "id_shop":id_shop},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
@@ -636,7 +637,7 @@ $(document).ready(
                     type: "POST",
                     async: false,
                     url: base_url + "modules/sendinblue/ajaxOrderTracking.php",
-                    data: {"token": token},
+                    data: {"token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
@@ -655,7 +656,7 @@ $(document).ready(
                     async: false,
                     url: base_url
                             + "modules/sendinblue/ajaxemailresult.php",
-                    data: {"page": page, "token": token},
+                    data: {"page": page, "token": token, "id_shop_group": id_shop_group, "id_shop":id_shop},
                     beforeSend: function() {
                         $('#ajax-busy').show();
                     },
@@ -715,17 +716,19 @@ $(document).ready(
     var sender = $('#sender_order').val();
     var message = $('#sender_order_message').val();
     var number = $('#sender_order_number').val();
+	var id_shop_group = $('#id_shop_group').val();
+	var id_shop = $('#id_shop').val();
 
     $.ajax({
         type: "POST",
         async: false,
         url: base_url
                 + "modules/sendinblue/ajaxtestsms.php",
-        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token},
+        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token, "id_shop_group": id_shop_group, "id_shop":id_shop},
         beforeSend: function() {
             $('#ajax-busy').show();
         },
-        success: function(msg) {
+        success: function(msg) { 
             $('#ajax-busy').hide();
             var data =$.parseJSON(msg);
 
@@ -750,13 +753,15 @@ $('.testSmsShipped').live('click', function(){
     var sender = $('#sender_shipment').val();
     var message = $('#sender_shipment_message').val();
     var number = $('#sender_shipment_number').val();
+	var id_shop_group = $('#id_shop_group').val();
+	var id_shop = $('#id_shop').val();
 
     $.ajax({
         type: "POST",
         async: false,
         url: base_url
                 + "modules/sendinblue/ajaxTestSmsShipped.php",
-        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token},
+        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token, "id_shop_group": id_shop_group, "id_shop":id_shop},
         beforeSend: function() {
             $('#ajax-busy').show();
         },
@@ -788,6 +793,8 @@ $('.testSmsCampaignsend').live('click', function(){
     var sender = $('#sender_campaign').val();
     var message = $('#sender_campaign_message').val();
     var number = $('#sender_campaign_number_test').val();
+	var id_shop_group = $('#id_shop_group').val();
+	var id_shop = $('#id_shop').val();
     if (sender == '')
     {
         alert(sendererr);
@@ -806,7 +813,7 @@ $('.testSmsCampaignsend').live('click', function(){
             async: false,
             url: base_url
                     + "modules/sendinblue/ajaxCampaignSmsTest.php",
-            data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token},
+            data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
             beforeSend: function() {
                 $('#ajax-busy').show();
             },

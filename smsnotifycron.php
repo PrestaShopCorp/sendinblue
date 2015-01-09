@@ -31,15 +31,17 @@ include(dirname(__FILE__).'/sendinblue.php');
 if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME')))
 die('Error: Invalid Token');
 $sendin = new Sendinblue();
-if ($sendin->getSmsCredit() <= Configuration::get('Sendin_Notify_Value') && Configuration::get('Sendin_Api_Sms_Credit') == 1)
+$credit_value = $sendin->getSmsCredit(Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
+if ($credit_value <= Configuration::get('Sendin_Notify_Value', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop')) && Configuration::get('Sendin_Api_Sms_Credit', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop')) == 1)
 {
-	if (Configuration::get('Sendin_Notify_Cron_Executed') == 0)
+	if (Configuration::get('Sendin_Notify_Cron_Executed', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop')) == 0)
 	{
 		$id_lang = Tools::getValue('lang');
-		$sendin->sendNotifySms(Configuration::get('Sendin_Notify_Email'), $id_lang);
-		Configuration::updateValue('Sendin_Notify_Cron_Executed', 1);
+		$notify_email = Configuration::get('Sendin_Notify_Email', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
+		$sendin->sendNotifySms($notify_email, $id_lang, Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
+		Configuration::updateValue('Sendin_Notify_Cron_Executed', 1, '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 	}
 }
 else
-	Configuration::updateValue('Sendin_Notify_Cron_Executed', 0);
+	Configuration::updateValue('Sendin_Notify_Cron_Executed', 0, '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 	echo 'Cron executed successfully';

@@ -69,6 +69,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_80e93bacdc28ff339467b75c850d1510'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_31bb2f6e9b8fb11cbb7fb63c6025223f'] = 'Seleccione um template';
 $_MODULE['<{sendinblue}prestashop>sendinblue_e57c2d0ee1cd319e1fbf4efff0f2b77a'] = 'Seleccione um template Sendinblue que será enviado para todos os contactos que subscreveram à sua newsletter.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_06933067aafd48425d67bcb01bba5cb6'] = 'Atualizar';
+$_MODULE['<{sendinblue}prestashop>sendinblue_11af2f30bc4f0c405c00d14a359fa061'] = 'Importar Antigos Assinantes';
 $_MODULE['<{sendinblue}prestashop>sendinblue_4a85edadc7601bdb29c2c8593a59ca03'] = 'Para sincronizar os endereços de e-mail dos seus clientes, da plataforma SendinBlue para seu site de E-commerce, você precisa executar';
 $_MODULE['<{sendinblue}prestashop>sendinblue_c2e2fce3a995f59900d7afbbe58683f5'] = 'este link';
 $_MODULE['<{sendinblue}prestashop>sendinblue_20f6cf4b46982d608dc164f23249b7c3'] = 'todos os dias';
@@ -105,7 +106,6 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_f4f70727dc34561dfde1a3c529b6205c'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_495a3b3985cc02dbf7b4111b4e913d8a'] = 'Ativar o módulo SendinBlue';
 $_MODULE['<{sendinblue}prestashop>sendinblue_656a6828d7ef1bb791e42087c4b5ee6e'] = 'Chave API';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ab07708173b94fb02480c589572ded63'] = 'Por favor, insira sua chave API que está associada à sua conta SendinBlue. Você pode encontra-la aqui: https://my.sendinblue.com/advanced/apikey. Se você ainda não tem uma conta SendinBlue, você deve criar uma conta no site https://www.sendinblue.com ';
-$_MODULE['<{sendinblue}prestashop>sendinblue_11af2f30bc4f0c405c00d14a359fa061'] = 'Importar Antigos Assinantes';
 $_MODULE['<{sendinblue}prestashop>sendinblue_6e659c47c94d1e1dc7121859f43fb2b0'] = 'Endereço de E-mail inválido';
 $_MODULE['<{sendinblue}prestashop>sendinblue_b538427eef71d92ea64669eaa7957240'] = 'O endereço de e-mail não existe no banco de dados';
 $_MODULE['<{sendinblue}prestashop>sendinblue_3b2c452f8894cf644d24cca8d1bb7a6e'] = 'Seu endereço de e-mail já cancelou nossa newsletter';
@@ -145,7 +145,7 @@ $_MODULE['<{sendinblue}prestashop>smssetting_33953f22b8bad8e20600a5510bd45bc2'] 
 $_MODULE['<{sendinblue}prestashop>smssetting_97d5d828dc27ba50fb84f0c292f52964'] = 'Enviar uma campanha SMS';
 $_MODULE['<{sendinblue}prestashop>smssetting_2be27622dd6f60ab534ae0ef65854084'] = 'Parâmetros de SMS';
 $_MODULE['<{sendinblue}prestashop>smssetting_8aace3ec18d83874d22850b7eee93c7d'] = 'Remetente';
-$_MODULE['<{sendinblue}prestashop>smssetting_2070b867fd1cf98c07f3a70ae0ed3ee1'] = 'Este campo permite que você personalize o remetente do SMS. Atenção, existe um número limitado de caracteres. Se você inserir um nome, este será limitado a 11 caracteres (caracteres especiais (á, ê, õ, ...) não são aceitos) e se você digitar um número de telefone, este é limitado a 17 caracteres. O número de telefone celular deve ser neste formato: 00 + código do país + código da cidade + nº de celular (por exemplo, para um celular do Brasil nº 92110000 você deve usar 00556192110000 (0055 é o país + 61 é a cidade de Brasília + 92110000 é o número de celular)';
+$_MODULE['<{sendinblue}prestashop>smssetting_68688d6d52b42caa1ab6c4135fbf5c5b'] = 'Este campo permite que você personalize o remetente do SMS. O número de caracteres é limitado a 11 caracteres alfanuméricos. Você não pode configurar o remetente com um número de telefone nem caracteres especiais (acentos, til, etc.)';
 $_MODULE['<{sendinblue}prestashop>smssetting_8f2af9579772d58910778116b2e71ab5'] = 'Número de caracteres restantes	:';
 $_MODULE['<{sendinblue}prestashop>smssetting_4c2a8fe7eaf24721cc7a9f0175115bd4'] = 'Mensagem';
 $_MODULE['<{sendinblue}prestashop>smssetting_93aed4c9576de348938b3b18070b335c'] = 'Crie o conteúdo do seu SMS com um limite de 160 caracteres. Mais de 160 caracteres, será contabilizado como um segundo SMS. Portanto, se você escrever um SMS de 240 caracteres, isso conta como dois SMS.';

@@ -33,7 +33,7 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 
 $sendin = new Sendinblue();
 
-if (Configuration::get('Sendin_order_tracking_Status') == 0)
+if (Configuration::get('Sendin_order_tracking_Status', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop')) == 0)
 {
 	$handle = fopen(_PS_MODULE_DIR_.'sendinblue/csv/ImportOldOrdersToSendinblue.csv', 'w+');
 	$key_value = array();
@@ -41,14 +41,14 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 
 	foreach ($key_value as $linedata)
 	fwrite($handle, $linedata."\n");
-	$customer_detail = $sendin->getAllCustomers();
+	$customer_detail = $sendin->getAllCustomers(Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 	foreach ($customer_detail as $customer_value)
 	{
 		$orders = Order::getCustomerOrders($customer_value['id_customer']);
 		if (count($orders) > 0)
 		{
 			$data = array();
-			$data['key'] = Configuration::get('Sendin_Api_Key');
+			$data['key'] = Configuration::get('Sendin_Api_Key', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 			$data['webaction'] = 'USERS-STATUS';
 			$data['email'] = $customer_value['email'];
 			$sendin->curlRequest($data);
@@ -64,7 +64,7 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 						$order_id = $orders_data['id_order'];
 
 					$order_price = Tools::safeOutput($orders_data['total_paid']);
-					$date_value = $sendin->getApiConfigValue();
+					$date_value = $sendin->getApiConfigValue(Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 
 					if ($date_value->date_format == 'dd-mm-yyyy')
 						$date = date('d-m-Y', strtotime($orders_data['date_add']));
@@ -81,7 +81,7 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 		}
 	}
 	fclose($handle);
-	$list = str_replace('|', ',', Configuration::get('Sendin_Selected_List_Data'));
+	$list = str_replace('|', ',', Configuration::get('Sendin_Selected_List_Data', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop')));
 	if (preg_match('/^[0-9,]+$/', $list))
 		$list = $list;
 	else
@@ -89,7 +89,7 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 
 	$import_data = array();
 	$import_data['webaction'] = 'IMPORTUSERS';
-	$import_data['key'] = Configuration::get('Sendin_Api_Key');
+	$import_data['key'] = Configuration::get('Sendin_Api_Key', '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 	$import_data['url'] = $sendin->local_path.$sendin->name.'/csv/ImportOldOrdersToSendinblue.csv';
 	$import_data['listids'] = $list;
 	$import_data['notify_url'] = $sendin->local_path.'sendinblue/EmptyImportOldOrdersFile.php?token='.Tools::getValue('token');
@@ -98,6 +98,6 @@ if (Configuration::get('Sendin_order_tracking_Status') == 0)
 	*/
 	$sendin->curlRequestAsyc($import_data);
 
-	Configuration::updateValue('Sendin_order_tracking_Status', 1);
+	Configuration::updateValue('Sendin_order_tracking_Status', 1, '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 	exit;
 }
