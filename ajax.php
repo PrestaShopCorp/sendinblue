@@ -29,8 +29,8 @@ include(dirname(__FILE__).'/../../config/config.inc.php');
 if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME')))
 	die('Error: Invalid Token');
 
-Configuration::updateValue('Sendin_Tracking_Status', Tools::getValue('script'));
-Configuration::updateValue('Sendin_order_tracking_Status', 0);
+Configuration::updateValue('Sendin_Tracking_Status', Tools::getValue('script'), '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
+Configuration::updateValue('Sendin_order_tracking_Status', 0, '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 
 echo 'done';
 exit;

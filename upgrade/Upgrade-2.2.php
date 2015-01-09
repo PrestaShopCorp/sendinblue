@@ -1,6 +1,6 @@
 <?php
 /**
-* 2007-2014 PrestaShop
+* 2007-2015 PrestaShop
 *
 * NOTICE OF LICENSE
 *
@@ -19,17 +19,21 @@
 * needs please refer to http://www.prestashop.com for more information.
 *
 * @author    PrestaShop SA <contact@prestashop.com>
-* @copyright 2007-2014 PrestaShop SA
+* @copyright 2007-2015 PrestaShop SA
 * @license   http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
 * International Registered Trademark & Property of PrestaShop SA
 */
 
-include(dirname(__FILE__).'/../../config/config.inc.php');
-include(dirname(__FILE__).'/../../init.php');
-include(dirname(__FILE__).'/sendinblue.php');
+if (!defined('_PS_VERSION_'))
+	exit;
 
-if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME')))
-die('Error: Invalid Token');
-$sendin = new Sendinblue();
-$sendin->userStatus(Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
-echo 'Cron executed successfully';
+function upgrade_module_2_2($module)
+{
+	//sql update
+	if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `'._DB_PREFIX_.'sendin_newsletter` LIKE \'id_shop\'') == false)
+		Db::getInstance()->Execute('ALTER TABLE `'._DB_PREFIX_.'sendin_newsletter` ADD `id_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id`');
+
+	if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `'._DB_PREFIX_.'sendin_newsletter` LIKE \'id_group_shop\'') == false)
+		Db::getInstance()->Execute('ALTER TABLE `'._DB_PREFIX_.'sendin_newsletter` ADD `id_group_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id_shop`');
+		return $module;
+}

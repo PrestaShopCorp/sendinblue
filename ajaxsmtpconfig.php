@@ -31,9 +31,9 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 	die('Error: Invalid Token');
 
 $sendin = new Sendinblue();
-Configuration::updateValue('Sendin_Api_Smtp_Status', Tools::getValue('smtptest'));
+Configuration::updateValue('Sendin_Api_Smtp_Status', Tools::getValue('smtptest'), '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 
 if (Tools::getValue('smtptest') == 1)
-	echo $sendin->postProcessConfiguration();
+	echo $sendin->postProcessConfiguration(Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
 else
-	$sendin->resetConfigSendinSmtp();
+	$sendin->resetConfigSendinSmtp(Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));

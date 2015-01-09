@@ -1,5 +1,5 @@
 {*
-* 2007-2014 PrestaShop
+* 2007-2015 PrestaShop
 *
 * NOTICE OF LICENSE
 *
@@ -18,7 +18,7 @@
 * needs please refer to http://www.prestashop.com for more information.
 *
 * @author PrestaShop SA <contact@prestashop.com>
-* @copyright  2007-2014 PrestaShop SA
+* @copyright  2007-2015 PrestaShop SA
 * @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 * International Registered Trademark & Property of PrestaShop SA
 *}
@@ -41,12 +41,13 @@
 			
 		</td>
 		<td class="{$cl_version|escape:'htmlall':'UTF-8'|stripslashes}">
-			
+			{if $sourceInfo.phone_mobile != ''}
             {foreach from=$smsdata key=jk item=smsInfo}
             	{if $jk == $sourceInfo.phone_mobile}
                 	{$smsInfo|escape:'htmlall':'UTF-8'|stripslashes}
                 {/if}
             {/foreach}
+            {/if}
 			
 		</td>
 		<td class="tipTd">
@@ -89,9 +90,9 @@
 			{/if}
 			{if isset($sourceInfo.phone_mobile) && $sourceInfo.phone_mobile !=''}
 			
-                            {if $pstatus==1 && isset($data[$emailid].sms_exist) && $data[$emailid].sms_exist !=''}
+                            {if $pstatus==1 && isset($data[$emailid].sms_exist) && $data[$emailid].sms_exist != ''}
                                 <a href="javascript:void(0)" class="ajax_sms_href" email="{$sourceInfo.email|escape:'htmlall':'UTF-8'|stripslashes}"><img class="toolTip1 imgstatus" title="{l s='Subscribe the contact' mod='sendinblue'}" id="ajax_contact_status_{$counter|intval}" src="../img/admin/disabled.gif" /></a>
-                            {elseif $pstatus==0 && isset($data[$emailid].sms_exist) && $data[$emailid].sms_exist !=''}
+                            {elseif $pstatus==0 && isset($data[$emailid].sms_exist) && $data[$emailid].sms_exist != ''}
                                 <a href="javascript:void(0)" class="ajax_sms_href" email="{$sourceInfo.email|escape:'htmlall':'UTF-8'|stripslashes}"><img class="toolTip1 imgstatus" title="{l s='Unsubscribe the contact' mod='sendinblue'}" id="ajax_contact_status_{$counter|intval}" src="../img/admin/enabled.gif" /></a>
                             
                             {else}
