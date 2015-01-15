@@ -128,6 +128,7 @@ class Sendinblue extends Module {
 			else
 			$this->cl_version = 'ver_4';
 
+		$this->checkForUpdates();
 	}
 
 	/**
@@ -456,6 +457,24 @@ class Sendinblue extends Module {
 				return true;
 
 		return false;
+	}
+
+	/**
+	*  This method is use for alter table structure below 1.5 version.
+	*/
+	private function checkForUpdates()
+	{
+		// Used by PrestaShop 1.3 & 1.4
+		if (version_compare(_PS_VERSION_, '1.5', '<') && self::isInstalled($this->name))
+		foreach (array('2.2') as $version)
+		{
+			$file = dirname(__FILE__).'/upgrade/Upgrade-'.$version.'.php';
+			if (Configuration::get('Sendinblue_Version') < $version && file_exists($file))
+			{
+				include_once($file);
+				call_user_func('upgrade_module_'.str_replace('.', '_', $version), $this);
+			}
+		}
 	}
 
 	/**
