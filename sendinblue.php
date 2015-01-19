@@ -522,7 +522,12 @@ class Sendinblue extends Module {
 	{
 		$id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
 		$id_shop = !empty($id_shop) ? $id_shop : 'NULL';
-		$condition = $this->conditionalValueSecond();
+		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
+			$condition = '';
+			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
+			$condition = 'WHERE C.id_shop_group ='.$id_shop_group;
+			else
+			$condition = 'WHERE C.id_shop_group ='.$id_shop_group.' AND C.id_shop ='.$id_shop;
 
 		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
 		$condition2 = '';
