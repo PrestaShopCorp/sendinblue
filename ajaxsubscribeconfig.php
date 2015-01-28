@@ -29,4 +29,4 @@ include(dirname(__FILE__).'/../../config/config.inc.php');
 if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME')))
 	die('Error: Invalid Token');
 
-Configuration::updateValue('Sendin_Subscribe_Setting', Tools::getValue('managesubscribe'));
+Configuration::updateValue('Sendin_Subscribe_Setting', Tools::getValue('managesubscribe'), '', Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));

@@ -31,4 +31,4 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 die('Error: Invalid Token');
 
 $sendin = new Sendinblue();
-$sendin->updateNewsletterStatus();
+$sendin->updateNewsletterStatus(Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));

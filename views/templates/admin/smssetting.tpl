@@ -1,7 +1,5 @@
-
-
 {*
-* 2007-2014 PrestaShop
+* 2007-2015 PrestaShop
 *
 * NOTICE OF LICENSE
 *
@@ -20,7 +18,7 @@
 * needs please refer to http://www.prestashop.com for more information.
 *
 * @author PrestaShop SA <contact@prestashop.com>
-* @copyright  2007-2014 PrestaShop SA
+* @copyright  2007-2015 PrestaShop SA
 * @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 * International Registered Trademark & Property of PrestaShop SA
 *}
@@ -81,7 +79,7 @@
                <div id="tabs_container">
                   <ul id="tabs">
                      <li class="active"><a href="#tab1">{l s='Send SMS after order confirmation' mod='sendinblue'}</a></li>
-                     <li><a class="icon_accept" href="#tab2">{l s='Send a SMS confirmation for the shipment of the order' mod='sendinblue'}</a></li>
+                     <li><a href="#tab2">{l s='Send a SMS confirmation for the shipment of the order' mod='sendinblue'}</a></li>
                      <li><a href="#tab3">{l s='Send a campaign SMS' mod='sendinblue'}</a></li>
                   </ul>
                </div>
@@ -116,8 +114,8 @@
                                           <label>{l s='Sender' mod='sendinblue'}</label></td>
                                           <td>
                                              <input name="sender_order"  id="sender_order" type="text" value="{$Sendin_Sender_Order|escape:'htmlall':'UTF-8'}" class="input_bx" />
-                                             <span class="toolTip" title="{l s='This field allows you to personalize the SMS sender. Attention, there is a limited number of characters.If you enter a name, it is limited to 11 characters, and special characters (é, à ...) are not accepted. If you enter a phone number, it is limited to 17 characters; the number should be preceded by 00 and the country code (for instance, for France mobile 06 12 34 56 78 use 0033612345678 with 0033 is France prefix ).' mod='sendinblue'}">&nbsp;</span>
-                                             <div class="hintmsg"><em>{l s='Number of characters left: ' mod='sendinblue'}<span id="sender_order_text">17	</span></em>
+                                             <span class="toolTip" title="{l s='This field allows you to customize the SMS sender. The number of characters is limited to 11 alphanumeric characters. You can´t configure your Sender with a phone number.' mod='sendinblue'}">&nbsp;</span>
+                                             <div class="hintmsg"><em>{l s='Number of characters left: ' mod='sendinblue'}<span id="sender_order_text">11</span></em>
                                              </div>
                                              
                                           </td>
@@ -157,7 +155,7 @@
                                              
                                              <div class="hintmsg"><em>{l s='Sending a test SMS will be deducted from your SMS credits.' mod='sendinblue'}</em></div>
                                              <label style="padding-top:5px;">{l s='Send a test SMS' mod='sendinblue'}</label>
-                                             <input name="sender_order_number" id="sender_order_number" maxlength="17" type="text" value="" class="input_bx" />
+                                             <input name="sender_order_number" id="sender_order_number" maxlength="11" type="text" value="" class="input_bx" />
                                              <span class="toolTip" title="{l s=' The phone number should be in this form: 0033663309741 for this France mobile 06 63 30 97 41 (0033 is France prefix)' mod='sendinblue'}">&nbsp;</span>
                                              <input name="sender_order_submit" id="sender_order_submit" type="button" value="{l s='Send' mod='sendinblue'}" class="button testOrdersmssend" successmsg="{l s='Message has been sent successfully' mod='sendinblue'}"  failmsg="{l s='Message has not been sent successfully' mod='sendinblue'}" />
                                           </td>
@@ -201,9 +199,9 @@
                                        <tr>
                                           <td style="width:250px"  valign="top"><label>{l s='Sender' mod='sendinblue'}</label></td>
                                           <td >
-                                             <input name="sender_shipment" maxlength="17" id="sender_shipment" type="text" value="{$Sendin_Sender_Shipment|escape:'htmlall':'UTF-8'}" class="input_bx" />
-                                             <span class="toolTip" title="{l s='This field allows you to personalize the SMS sender. Attention, there is a limited number of characters.If you enter a name, it is limited to 11 characters, and special characters (é, à ...) are not accepted. If you enter a phone number, it is limited to 17 characters; the number should be preceded by 00 and the country code (for instance, for France mobile 06 12 34 56 78 use 0033612345678 with 0033 is France prefix ).' mod='sendinblue'}">&nbsp;</span>
-                                             <div class="hintmsg"><em>{l s='Number of characters left: ' mod='sendinblue'}<span id="sender_shipment_text">17</span></em>
+                                             <input name="sender_shipment" maxlength="11" id="sender_shipment" type="text" value="{$Sendin_Sender_Shipment|escape:'htmlall':'UTF-8'}" class="input_bx" />
+                                             <span class="toolTip" title="{l s='This field allows you to customize the SMS sender. The number of characters is limited to 11 alphanumeric characters. You can´t configure your Sender with a phone number.' mod='sendinblue'}">&nbsp;</span>
+                                             <div class="hintmsg"><em>{l s='Number of characters left: ' mod='sendinblue'}<span id="sender_shipment_text">11</span></em>
                                              </div>
                                              
                                           </td>
@@ -243,7 +241,7 @@
                                              
                                              <div class="hintmsg"><em>{l s='Sending a test SMS will be deducted from your SMS credits.' mod='sendinblue'}</em></div>
                                              <label style="padding-top:5px;">{l s='Send a test SMS' mod='sendinblue'}</label>
-                                             <input name="sender_shipment_number" id="sender_shipment_number" maxlength="17" type="text" value="" class="input_bx" />
+                                             <input name="sender_shipment_number" id="sender_shipment_number" maxlength="11" type="text" value="" class="input_bx" />
                                              <span class="toolTip" title="{l s=' The phone number should be in this form: 0033663309741 for this France mobile 06 63 30 97 41 (0033 is France prefix)' mod='sendinblue'}">&nbsp;</span>
                                              <input name="sender_shipment_submit" id="sender_shipment_submit" type="button" successmsg="{l s='Message has been sent successfully' mod='sendinblue'}"  failmsg="{l s='Message has not been sent successfully' mod='sendinblue'}" value="{l s='Send' mod='sendinblue'}" class="button testSmsShipped"  />
                                           </td>
@@ -267,7 +265,7 @@
                            <tr>
                               <td class="row1">
                                  <label class="r_label"  style="margin-left: 7px; padding-top:0px;"><strong>{l s='Send a campaign SMS' mod='sendinblue'}</strong></label>
-                                 <div class="radio_bx" class="{$cl_version|escape:'htmlall':'UTF-8'|stripslashes}"> <span>
+                                 <div class="radio_bx {$cl_version|escape:'htmlall':'UTF-8'|stripslashes}"> <span>
                                     <input name="sms_campaign_setting" class="sms_campaign_setting radio_spaceing" {if isset($sms_campaign_status) && $sms_campaign_status == 1}checked="checked"{/if} type="radio" value="1" />
                                     {l s='Yes' mod='sendinblue'}</span> <span>
                                     <input name="sms_campaign_setting" class="sms_campaign_setting radio_spaceing2" {if isset($sms_campaign_status) && $sms_campaign_status == 0}checked="checked"{/if} type="radio" value="0" />
@@ -310,9 +308,9 @@
                                        <tr>
                                           <td valign="top"><label>{l s='Sender' mod='sendinblue'}</label></td>
                                           <td>
-                                             <input name="sender_campaign" maxlength="17" id="sender_campaign" type="text" value="" class="input_bx" />
-                                             <span class="toolTip" title="{l s='This field allows you to personalize the SMS sender. Attention, there is a limited number of characters.If you enter a name, it is limited to 11 characters, and special characters (é, à ...) are not accepted. If you enter a phone number, it is limited to 17 characters; the number should be preceded by 00 and the country code (for instance, for France mobile 06 12 34 56 78 use 0033612345678 with 0033 is France prefix ).' mod='sendinblue'}">&nbsp;</span>
-                                             <div class="hintmsg"><em>{l s='Number of characters left: ' mod='sendinblue'}<span id="sender_campaign_text">17</span></em>
+                                             <input name="sender_campaign" maxlength="11" id="sender_campaign" type="text" value="" class="input_bx" />
+                                             <span class="toolTip" title="{l s='This field allows you to customize the SMS sender. The number of characters is limited to 11 alphanumeric characters. You can´t configure your Sender with a phone number.' mod='sendinblue'}">&nbsp;</span>
+                                             <div class="hintmsg"><em>{l s='Number of characters left: ' mod='sendinblue'}<span id="sender_campaign_text">11</span></em>
                                              </div>
                                              
                                           </td>
@@ -345,7 +343,7 @@
                                              
                                              <div class="hintmsg"><em>{l s='Sending a test SMS will be deducted from your SMS credits.' mod='sendinblue'}</em></div>
                                              <label style="padding-top:5px;">{l s='Send a test SMS' mod='sendinblue'}</label>
-                                             <input name="sender_campaign_number_test" id="sender_campaign_number_test" maxlength="17" type="text" value="" class="input_bx" />
+                                             <input name="sender_campaign_number_test" id="sender_campaign_number_test" maxlength="11" type="text" value="" class="input_bx" />
                                              <span class="toolTip" title="{l s=' The phone number should be in this form: 0033663309741 for this France mobile 06 63 30 97 41 (0033 is France prefix)' mod='sendinblue'}">&nbsp;</span>
                                              <input name="sender_campaign_test_submit" id="sender_campaign_test_submit" type="button" value="{l s='Send' mod='sendinblue'}" sendererr="{l s='Please fill the sender field' mod='sendinblue'}" mobileerr="{l s='Please fill the Mobile Phone field' mod='sendinblue'}" messageerr="{l s='Please fill the message field' mod='sendinblue'}" successmsg="{l s='Message has been sent successfully' mod='sendinblue'}"  failmsg="{l s='Message has not been sent successfully' mod='sendinblue'}"  class="button testSmsCampaignsend"  />
                                           </td>
