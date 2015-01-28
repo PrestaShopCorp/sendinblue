@@ -196,11 +196,13 @@ class Sendinblue extends Module {
 					$customer = new CustomerCore((int)$id_customer);
 
 					// Code to get address of logged in user
-					if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
-						$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
-					else
-						$customer_address = $this->getCustomerAddresses((int)$customer_data[0]['id_customer']);
-
+					if (Validate::isLoadedObject($customer))
+					{
+						if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
+							$customer_address = $customer->getAddresses((int)$customer_data[0]['id_lang']);
+						else
+							$customer_address = $this->getCustomerAddresses((int)$customer_data[0]['id_customer']);
+					}
 					$phone_mobile = '';
 					$id_country = '';
 					// Check if user have address data
@@ -272,10 +274,7 @@ class Sendinblue extends Module {
 			if ($email_id > 0)
 			{
 				$id_shop_group = !empty($this->id_shop_group)?$this->id_shop_group:1;
-				if (version_compare(_PS_VERSION_, '1.5', '>='))
-					$condition = 'AND `id_shop_group` = '.(int)$id_shop_group.'';
-				else
-				$condition = '';
+				$condition = $this->checkVersionCondition($id_shop_group);
 
 				Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\''.$condition.'');
 				if ($this->newsletter == 0)
@@ -312,10 +311,7 @@ class Sendinblue extends Module {
 					if ($email_id > 0)
 					{
 						$id_shop_group = !empty($this->id_shop_group)?$this->id_shop_group:1;
-						if (version_compare(_PS_VERSION_, '1.5', '>='))
-							$condition = 'AND `id_shop_group` = '.(int)$id_shop_group.'';
-						else
-						$condition = '';
+						$condition = $this->checkVersionCondition($id_shop_group);
 
 						Db::getInstance()->execute('DELETE FROM '._DB_PREFIX_.'sendin_newsletter WHERE `email` = \''.pSQL($this->context->cookie->email).'\''.$condition.'');
 						if ($this->newsletter == 0)
@@ -351,10 +347,13 @@ class Sendinblue extends Module {
 					$customer = new CustomerCore((int)$id_customer);
 
 					// Code to get address of logged in user
-					if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
-						$customer_address = $customer->getAddresses((int)$this->context->language->id);
-					else
-					$customer_address = $this->getCustomerAddresses((int)$id_customer);
+					if (Validate::isLoadedObject($customer))
+					{
+						if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
+							$customer_address = $customer->getAddresses((int)$this->context->language->id);
+						else
+						$customer_address = $this->getCustomerAddresses((int)$id_customer);
+					}
 					$phone_mobile = '';
 					$id_country = '';
 					// Check if user have address data
@@ -575,15 +574,7 @@ class Sendinblue extends Module {
 	*/
 	public function getTotalSubUnReg()
 	{
-		$id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
-		$id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
-
-		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
-			$condition = '';
-			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
-			$condition = 'AND id_shop_group ='.$id_shop_group;
-			else
-			$condition = 'AND id_shop_group ='.$id_shop_group.' AND id_shop ='.$id_shop;
+		$condition = $this->conditionalValue();
 
 		return Db::getInstance()->getValue('SELECT  count(*) as Total FROM '._DB_PREFIX_.'sendin_newsletter where active = 1 '.$condition);
 	}
@@ -593,15 +584,7 @@ class Sendinblue extends Module {
 	*/
 	public function getTotalUnSubUnReg()
 	{
-		$id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
-		$id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
-
-		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
-			$condition = '';
-			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
-			$condition = 'AND id_shop_group ='.$id_shop_group;
-			else
-			$condition = 'AND id_shop_group ='.$id_shop_group.' AND id_shop ='.$id_shop;
+		$condition = $this->conditionalValue();
 
 		return Db::getInstance()->getValue('SELECT  count(*) as Total FROM '._DB_PREFIX_.'sendin_newsletter where active = 0 '.$condition);
 	}
@@ -673,11 +656,13 @@ class Sendinblue extends Module {
 			$customer = new CustomerCore((int)$id_customer);
 
 			// Code to get address of logged in user
-			if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
-				$customer_address = $customer->getAddresses((int)$customer_data[$i]['id_lang']);
-			else
-				$customer_address = $this->getCustomerAddresses((int)$id_customer);
-
+			if (Validate::isLoadedObject($customer))
+			{
+				if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
+					$customer_address = $customer->getAddresses((int)$customer_data[$i]['id_lang']);
+				else
+					$customer_address = $this->getCustomerAddresses((int)$id_customer);
+			}
 			// Check if user have address data
 			if ($customer_address && count($customer_address) > 0)
 			{
@@ -843,18 +828,11 @@ class Sendinblue extends Module {
 	*/
 	public function addNewUsersToDefaultList()
 	{
-		$id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
-		$id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
-		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
-			$condition = '';
-			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
-			$condition = 'WHERE P.id_shop_group ='.$id_shop_group;
-			else
-			$condition = 'WHERE P.id_shop_group ='.$id_shop_group.' AND P.id_shop ='.$id_shop;
+		$condition = $this->conditionalValueSecond();
 
-		return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('SELECT P.email,
-			P.newsletter as newsletter, P.date_upd as date_add
-			from '._DB_PREFIX_.'customer AS P '.$condition.' UNION select Q.email,
+		return Db::getInstance(_PS_USE_SQL_SLAVE_)->ExecuteS('SELECT C.email,
+			C.newsletter as newsletter, C.date_upd as date_add
+			from '._DB_PREFIX_.'customer AS C '.$condition.' UNION select Q.email,
 			Q.active as newsletter, Q.newsletter_date_add as date_add
 			from '._DB_PREFIX_.'sendin_newsletter AS Q');
 	}
@@ -1011,14 +989,9 @@ class Sendinblue extends Module {
 			fputcsv($handle, $line);
 
 		}
-		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
-			$condition = '';
-			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
-			$condition = ' AND id_shop_group ='.$id_shop_group;
-			else
-			$condition = ' AND id_shop_group ='.$id_shop_group.' AND id_shop ='.$id_shop;
+		$condition = $this->conditionalValue();
 
-		$register_total = Db::getInstance()->ExecuteS('SELECT count(*) as total_val FROM '._DB_PREFIX_.'customer WHERE newsletter=1'.$condition);
+		$register_total = Db::getInstance()->ExecuteS('SELECT count(*) as total_val FROM '._DB_PREFIX_.'customer WHERE newsletter=1 '.$condition);
 		$start = 0;
 		$end = 1000;
 		$page = 1;
@@ -1486,7 +1459,6 @@ class Sendinblue extends Module {
 			return true;
 		else
 		return false;
-		exit();
 	}
 
 	/**
@@ -1668,6 +1640,7 @@ class Sendinblue extends Module {
 			{
 				$id_customer = $customer_detail['id_customer'];
 				$customer = new CustomerCore((int)$id_customer);
+				if (Validate::isLoadedObject($customer))
 				$customer_address = $customer->getAddresses((int)$this->context->language->id);
 
 				// Check if user have address data
@@ -1707,6 +1680,7 @@ class Sendinblue extends Module {
 			{
 				$id_customer = $customer_detail['id_customer'];
 				$customer = new CustomerCore((int)$id_customer);
+				if (Validate::isLoadedObject($customer))
 				$customer_address = $customer->getAddresses((int)$this->context->language->id);
 
 				// Check if user have address data
@@ -2562,11 +2536,13 @@ class Sendinblue extends Module {
 
 				$id_customer = $customer_data[$i]['id_customer'];
 				$customer = new CustomerCore((int)$id_customer);
-				if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
-					$customer_address = $customer->getAddresses((int)$customer_data[$i]['id_lang']);
-				else
-					$customer_address = $this->getCustomerAddresses((int)$id_customer);
-
+				if (Validate::isLoadedObject($customer))
+				{
+					if (version_compare(_PS_VERSION_, '1.5.3.4', '>'))
+						$customer_address = $customer->getAddresses((int)$customer_data[$i]['id_lang']);
+					else
+						$customer_address = $this->getCustomerAddresses((int)$id_customer);
+				}
 				if ($customer_address && count($customer_address) > 0)
 				{
 				// Code to get latest phone number of logged in user
@@ -2609,6 +2585,8 @@ class Sendinblue extends Module {
 				$attribute_key[] = 'PRENOM';
 			else
 				$attribute_key[] = 'NAME';
+
+			$client = 1;
 		}
 		if (!empty($lname))
 		{
@@ -2636,7 +2614,7 @@ class Sendinblue extends Module {
 			$attribute_data[] = $mobile;
 			$attribute_key[] = 'SMS';
 		}
-		if (isset($id_shop_group) && !empty($id_shop_group) && !empty($email))
+		if (version_compare(_PS_VERSION_, '1.5.3.4', '>') && isset($id_shop_group) && !empty($email))
 		{
 			if ($id_shop_group === null)
 			$id_shop_group = 1;
@@ -2644,8 +2622,6 @@ class Sendinblue extends Module {
 			$all_group_reg = array();
 			$all_group_unsubs = array();
 			$all_group_reg = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM '._DB_PREFIX_.'customer  WHERE email = "'.pSQL($email).'" GROUP BY email');
-			if (!empty($all_group_reg['groupid']))
-				$client = 1;
 
 			$all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM '._DB_PREFIX_.'sendin_newsletter  WHERE email = "'.pSQL($email).'" GROUP BY email');
 			$data_first = explode(',', $all_group_reg['groupid']);
@@ -2764,7 +2740,7 @@ class Sendinblue extends Module {
 			$attribute_data[] = $phone_mobile;
 			$attribute_key[] = 'SMS';
 		}
-		if (isset($id_shop_group) && !empty($id_shop_group) && !empty($email))
+		if (version_compare(_PS_VERSION_, '1.5.3.4', '>') && isset($id_shop_group) && !empty($email))
 		{
 			if ($id_shop_group === null)
 			$id_shop_group = 1;
@@ -3173,15 +3149,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 	*/
 	public function totalUnsubscribedUser()
 	{
-		$id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
-		$id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
-
-		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
-			$condition = '';
-			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
-			$condition = 'AND id_shop_group ='.$id_shop_group;
-			else
-			$condition = 'AND id_shop_group ='.$id_shop_group.' AND id_shop ='.$id_shop;
+		$condition = $this->conditionalValue();
 
 		return Db::getInstance()->getValue('
 			SELECT count(*) AS Total
@@ -3194,14 +3162,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 	*/
 	public function totalsubscribedUser()
 	{
-		$id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
-		$id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
-		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
-			$condition = '';
-			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
-			$condition = 'AND id_shop_group ='.$id_shop_group;
-			else
-			$condition = 'AND id_shop_group ='.$id_shop_group.' AND id_shop ='.$id_shop;
+		$condition = $this->conditionalValue();
 
 		return Db::getInstance()->getValue('
 			SELECT count(*) AS Total
@@ -3242,10 +3203,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 	*/
 	private function isNewsletterRegisteredSub($customer_email, $id_shop_group)
 	{
-		if (version_compare(_PS_VERSION_, '1.5', '>='))
-			$condition = 'and `id_shop_group` = '.(int)$id_shop_group.'';
-			else
-			$condition = '';
+		$condition = $this->checkVersionCondition($id_shop_group);
 		if (Db::getInstance()->getRow('SELECT `email` FROM '._DB_PREFIX_.'sendin_newsletter
 			WHERE `email` = \''.pSQL($customer_email).'\' and active=1 '.$condition.''))
 			return true;
@@ -3974,24 +3932,10 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		return Db::getInstance()->ExecuteS($sql);
 	}
 
-	public function getAllCustomers($id_shop_group = null, $id_shop = null)
+	public function getAllCustomers()
 	{
-		if ($id_shop === null)
-			$id_shop = $this->id_shop;
-		if ($id_shop_group === null)
-			$id_shop_group = $this->id_shop_group;
-
-		$id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
-		$id_shop = !empty($id_shop) ? $id_shop : 'NULL';
-
-		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
-			$condition = '';
-			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
-			$condition = 'WHERE id_shop_group ='.$id_shop_group;
-			else
-			$condition = 'WHERE id_shop_group ='.$id_shop_group.' AND id_shop ='.$id_shop;
-
-		$sql = 'SELECT `id_customer`, `firstname` ,`lastname` ,`email`, `id_gender`, `newsletter`, `newsletter_date_add` FROM `'._DB_PREFIX_.'customer` '.$condition;
+		$condition = $this->conditionalValueSecond();
+		$sql = 'SELECT C.id_customer, C.firstname, C.lastname, C.email, C.id_gender, C.newsletter, C.newsletter_date_add FROM '._DB_PREFIX_.'customer as C '.$condition;
 		return Db::getInstance()->ExecuteS($sql);
 	}
 
@@ -4217,6 +4161,49 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 			if (version_compare(_PS_VERSION_, '1.5.3.0', '>='))
 				Module::enableByName('sendinblue');
 		}
+	}
+
+	/**
+	* Make a condition for query.
+	*/
+	public function conditionalValue()
+	{
+		$id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
+		$id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
+
+		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
+			$condition = '';
+			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
+			$condition = 'AND id_shop_group ='.$id_shop_group;
+			else
+			$condition = 'AND id_shop_group ='.$id_shop_group.' AND id_shop ='.$id_shop;
+		return $condition;
+	}
+	public function conditionalValueSecond()
+	{
+		$id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
+		$id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
+		if ($id_shop === 'NULL' && $id_shop_group === 'NULL')
+			$condition = '';
+			elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL')
+			$condition = 'WHERE C.id_shop_group ='.$id_shop_group;
+			else
+			$condition = 'WHERE C.id_shop_group ='.$id_shop_group.' AND C.id_shop ='.$id_shop;
+
+		return $condition;
+	}
+
+	/**
+	* Make a condition after check ps version.
+	*/
+	public function checkVersionCondition($id_shop_group)
+	{
+		if (version_compare(_PS_VERSION_, '1.5', '>='))
+			$condition = 'and `id_shop_group` = '.(int)$id_shop_group.'';
+			else
+			$condition = '';
+
+		return $condition;
 	}
 }
 
