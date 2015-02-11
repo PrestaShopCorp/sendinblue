@@ -66,7 +66,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.2';
+		$this->version = '2.3';
 
 		parent::__construct();
 
