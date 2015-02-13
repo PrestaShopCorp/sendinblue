@@ -155,7 +155,7 @@
                                              
                                              <div class="hintmsg"><em>{l s='Sending a test SMS will be deducted from your SMS credits.' mod='sendinblue'}</em></div>
                                              <label style="padding-top:5px;">{l s='Send a test SMS' mod='sendinblue'}</label>
-                                             <input name="sender_order_number" id="sender_order_number" maxlength="11" type="text" value="" class="input_bx" />
+                                             <input name="sender_order_number" id="sender_order_number" maxlength="17" type="text" value="" class="input_bx" />
                                              <span class="toolTip" title="{l s=' The phone number should be in this form: 0033663309741 for this France mobile 06 63 30 97 41 (0033 is France prefix)' mod='sendinblue'}">&nbsp;</span>
                                              <input name="sender_order_submit" id="sender_order_submit" type="button" value="{l s='Send' mod='sendinblue'}" class="button testOrdersmssend" successmsg="{l s='Message has been sent successfully' mod='sendinblue'}"  failmsg="{l s='Message has not been sent successfully' mod='sendinblue'}" />
                                           </td>
@@ -241,7 +241,7 @@
                                              
                                              <div class="hintmsg"><em>{l s='Sending a test SMS will be deducted from your SMS credits.' mod='sendinblue'}</em></div>
                                              <label style="padding-top:5px;">{l s='Send a test SMS' mod='sendinblue'}</label>
-                                             <input name="sender_shipment_number" id="sender_shipment_number" maxlength="11" type="text" value="" class="input_bx" />
+                                             <input name="sender_shipment_number" id="sender_shipment_number" maxlength="17" type="text" value="" class="input_bx" />
                                              <span class="toolTip" title="{l s=' The phone number should be in this form: 0033663309741 for this France mobile 06 63 30 97 41 (0033 is France prefix)' mod='sendinblue'}">&nbsp;</span>
                                              <input name="sender_shipment_submit" id="sender_shipment_submit" type="button" successmsg="{l s='Message has been sent successfully' mod='sendinblue'}"  failmsg="{l s='Message has not been sent successfully' mod='sendinblue'}" value="{l s='Send' mod='sendinblue'}" class="button testSmsShipped"  />
                                           </td>
@@ -343,7 +343,7 @@
                                              
                                              <div class="hintmsg"><em>{l s='Sending a test SMS will be deducted from your SMS credits.' mod='sendinblue'}</em></div>
                                              <label style="padding-top:5px;">{l s='Send a test SMS' mod='sendinblue'}</label>
-                                             <input name="sender_campaign_number_test" id="sender_campaign_number_test" maxlength="11" type="text" value="" class="input_bx" />
+                                             <input name="sender_campaign_number_test" id="sender_campaign_number_test" maxlength="17" type="text" value="" class="input_bx" />
                                              <span class="toolTip" title="{l s=' The phone number should be in this form: 0033663309741 for this France mobile 06 63 30 97 41 (0033 is France prefix)' mod='sendinblue'}">&nbsp;</span>
                                              <input name="sender_campaign_test_submit" id="sender_campaign_test_submit" type="button" value="{l s='Send' mod='sendinblue'}" sendererr="{l s='Please fill the sender field' mod='sendinblue'}" mobileerr="{l s='Please fill the Mobile Phone field' mod='sendinblue'}" messageerr="{l s='Please fill the message field' mod='sendinblue'}" successmsg="{l s='Message has been sent successfully' mod='sendinblue'}"  failmsg="{l s='Message has not been sent successfully' mod='sendinblue'}"  class="button testSmsCampaignsend"  />
                                           </td>
