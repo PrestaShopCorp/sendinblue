@@ -36,7 +36,7 @@
                      
                      {if isset($prs_version) && $prs_version >= 1.5}
                      {if $current_credits_sms >= $Sendin_Notify_Value}
-                        <span style="margin-bottom:10px; color:#000; font-weight:bold;color: #585A69;">{l s='Currently you have ' mod='sendinblue'}<strong style="color: #000000;"> {$current_credits_sms|floatval}</strong> {l s=' credits sms. To buy more credits, please click' mod='sendinblue'}<a target="_blank" href ="{l s='https://www.sendinblue.com/pricing' mod='sendinblue'}">{l s=' here' mod='sendinblue'}</a>.</span>
+                        <span style="margin-bottom:10px; color:#000; font-weight:bold;color: #585A69;">{l s='Currently you have ' mod='sendinblue'}<strong style="color: #000000;"> {$current_credits_sms|floatval}</strong> {l s=' credits sms. To buy more credits, please click' mod='sendinblue'}<a target="_blank" href ="{l s='https://www.sendinblue.com/pricing?utm_source=prestashop_plugin&utm_medium=plugin&utm_campaign=module_link' mod='sendinblue'}">{l s=' here' mod='sendinblue'}</a>.</span>
                         {else}
                         <span style="margin-bottom:10px; font-weight:bold; color: #585A69;">{l s='Currently you have ' mod='sendinblue'} <strong  style="color:#F00; ">{$current_credits_sms|floatval}</strong> {l s=' credits sms. To buy more credits, please click' mod='sendinblue'}<a target="_blank" href ="{l s='https://www.sendinblue.com/pricing' mod='sendinblue'}" >{l s=' here' mod='sendinblue'}</a>.</span>
                         {/if}
