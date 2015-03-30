@@ -1,28 +1,4 @@
 <?php
-/**
-* 2007-2014 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-* @author    PrestaShop SA <contact@prestashop.com>
-* @copyright 2007-2014 PrestaShop SA
-* @license   http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
-* International Registered Trademark & Property of PrestaShop SA
-*/
 
 global $_MODULE;
 $_MODULE = array();
@@ -79,18 +55,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_b9a62d1a7ff5b5959a10a47dbf959deb'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_66f7086b92fafcfa511d04703dd76a3a'] = 'SendinBlue SMTP permet d’envoyer des emails transactionnels (un email transactionnel est envoyé pour attester d’une transaction ou d’un évènement. Exemple : email d’inscription, de confirmation de commande, une facture …). En activant cette fonctionnalité, vous êtes sûr que vos emails transactionnels parviennent bien à vos destinataires et vous pouvez consulter l\'historique de vos emails (ouvertures, clics …).';
 $_MODULE['<{sendinblue}prestashop>sendinblue_40be97420d49acc09e8ec2dc60e02533'] = 'Envoyer un email de test à';
 $_MODULE['<{sendinblue}prestashop>sendinblue_94966d90747b97d1f0f206c98a8b1ac3'] = 'Envoyer';
-$_MODULE['<{sendinblue}prestashop>sendinblue_98e006036e50a5c7b503bad7574831c1'] = 'Gérer la position de notre formulaire d\'inscription à la newletter dans le font office';
-$_MODULE['<{sendinblue}prestashop>sendinblue_59782f385b170f1c4a6342ab5e70f0d1'] = 'Bloc de la colonne de droite';
-$_MODULE['<{sendinblue}prestashop>sendinblue_498f79c4c5bbde77f1bceb6c86fd0f6d'] = 'Afficher';
-$_MODULE['<{sendinblue}prestashop>sendinblue_62a5e490880a92eef74f167d9dc6dca0'] = 'Masquer';
-$_MODULE['<{sendinblue}prestashop>sendinblue_989bd7abd00e67c2a6eb3cfa24dc542b'] = 'Bloc de la colonne de gauche';
-$_MODULE['<{sendinblue}prestashop>sendinblue_560222dcc6012e9888fa1d35aa44e626'] = 'Bloc de l\'en-tête';
-$_MODULE['<{sendinblue}prestashop>sendinblue_4e10a2c8ec0c44bfb7665e397b1bee6c'] = 'Bloc du Pied de page';
 $_MODULE['<{sendinblue}prestashop>sendinblue_5a5ee220c12193cbe869af4fc6faaa09'] = 'Sélectionner un hook';
-$_MODULE['<{sendinblue}prestashop>sendinblue_2e133be43aeffc23c748ae191cc316a8'] = 'Sélectionnez un hook :';
-$_MODULE['<{sendinblue}prestashop>sendinblue_87536f3ca5b57bdf84705b54ea6c5dd0'] = 'Spécifiez les fichiers pour lesquels vous ne voulez pas afficher notre formulaire d\'inscription à la newsletter\" Les nom des fichiers doivent être séparés séparés par une virgule.';
-$_MODULE['<{sendinblue}prestashop>sendinblue_9c08b765981701a830a0b558d1af6b43'] = 'Sélectionnez les pages où vous voulez cacher notre formulaire d\'inscription à la newletter';
-$_MODULE['<{sendinblue}prestashop>sendinblue_c9cc8cce247e49bae79f15173ce97354'] = 'Enregistrer';
 $_MODULE['<{sendinblue}prestashop>sendinblue_dd28538b67e7c720f37d3260c10d2747'] = 'sendinblue.png';
 $_MODULE['<{sendinblue}prestashop>sendinblue_5621ebf12c5f61b885a23ed959688e44'] = 'SendinBlue : LE plugin tout-en-un pour vos emails marketing et transactionnels.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_3db63d5a4b855aec504d07307463133b'] = 'Nous avons remarqué que vous utilisez les versions précédentes de notre plugin, veuillez les désinstaller / supprimer et garder que la dernière version de SendinBlue';
@@ -135,6 +100,19 @@ $_MODULE['<{sendinblue}prestashop>ajaxuserlist_7fb55ed0b7a30342ba6da306428cae04'
 $_MODULE['<{sendinblue}prestashop>ajaxuserlist_dd1f775e443ff3b9a89270713580a51b'] = 'Précédente';
 $_MODULE['<{sendinblue}prestashop>ajaxuserlist_10ac3d04253ef7e1ddc73e6091c0cd55'] = 'Suivante';
 $_MODULE['<{sendinblue}prestashop>ajaxuserlist_d55b30607c2a9a2616347d6edb789f6b'] = 'Dernière page';
+$_MODULE['<{sendinblue}prestashop>hookposition_98e006036e50a5c7b503bad7574831c1'] = 'Gérer la position de notre formulaire d\'inscription à la newletter dans le font office';
+$_MODULE['<{sendinblue}prestashop>hookposition_59782f385b170f1c4a6342ab5e70f0d1'] = 'Bloc de la colonne de droite';
+$_MODULE['<{sendinblue}prestashop>hookposition_498f79c4c5bbde77f1bceb6c86fd0f6d'] = 'Afficher';
+$_MODULE['<{sendinblue}prestashop>hookposition_62a5e490880a92eef74f167d9dc6dca0'] = 'Masquer';
+$_MODULE['<{sendinblue}prestashop>hookposition_989bd7abd00e67c2a6eb3cfa24dc542b'] = 'Bloc de la colonne de gauche';
+$_MODULE['<{sendinblue}prestashop>hookposition_560222dcc6012e9888fa1d35aa44e626'] = 'Bloc de l\'en-tête';
+$_MODULE['<{sendinblue}prestashop>hookposition_4e10a2c8ec0c44bfb7665e397b1bee6c'] = 'Bloc du Pied de page';
+$_MODULE['<{sendinblue}prestashop>hookposition_8ed4b102758ee6b642fb4e040d20221b'] = 'Sélectionnez le hook ainsi que les exceptions.';
+$_MODULE['<{sendinblue}prestashop>hookposition_2e133be43aeffc23c748ae191cc316a8'] = 'Sélectionnez un hook :';
+$_MODULE['<{sendinblue}prestashop>hookposition_d268155319f85edac004317cbedad77c'] = 'Exceptions :';
+$_MODULE['<{sendinblue}prestashop>hookposition_87536f3ca5b57bdf84705b54ea6c5dd0'] = 'Spécifiez les fichiers pour lesquels vous ne voulez pas afficher notre formulaire d\'inscription à la newsletter\" Les nom des fichiers doivent être séparés séparés par une virgule.';
+$_MODULE['<{sendinblue}prestashop>hookposition_9c08b765981701a830a0b558d1af6b43'] = 'Sélectionnez les pages où vous voulez cacher notre formulaire d\'inscription à la newletter';
+$_MODULE['<{sendinblue}prestashop>hookposition_c9cc8cce247e49bae79f15173ce97354'] = 'Enregistrer';
 $_MODULE['<{sendinblue}prestashop>smssetting_24cb398136bc32e39be4044b0ff91466'] = 'Gestion des SMS';
 $_MODULE['<{sendinblue}prestashop>smssetting_0edc8732de384f42f037beb08312e312'] = 'Actuellement, vous avez';
 $_MODULE['<{sendinblue}prestashop>smssetting_1d850b95b3a1504ed22da3ea7a45df18'] = 'crédits SMS. Pour acheter plus de crédits, cliquez ';

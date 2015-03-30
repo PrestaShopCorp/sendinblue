@@ -3001,167 +3001,59 @@ class Sendinblue extends Module {
 	*/
 	public function foBlockPosition()
 	{
-		$this->_html_block_position .= '
-			<table class="table tableblock hidetableblock form-data" style="margin-top:15px;"
-			cellspacing="0" cellpadding="0" width="100%">
-			<thead>
-			<tr>
-			<th colspan="4">'.$this->l('Manage the position of our newsletter\'s subscription form in the front office').'</th>
-			</tr>
-			</thead>';
+		$sendin_right_column = Configuration::get('Sendin_RightColumn', '', $this->id_shop_group, $this->id_shop);
+		$sendin_left_column = Configuration::get('Sendin_LeftColumn', '', $this->id_shop_group, $this->id_shop);
+		$sendin_top = Configuration::get('Sendin_Top', '', $this->id_shop_group, $this->id_shop);
+		$sendin_footer = Configuration::get('Sendin_Footer', '', $this->id_shop_group, $this->id_shop);
 
-		$this->_html_block_position .= '
-		<tr><td colspan="4"><form method="post" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
-		<div>
-			<label>
-			'.$this->l('Right column block').'
-			</label>
-			<span class="'.$this->cl_version.'">
-			<input type="radio" class="rightColumn radio_nospaceing" id="yesradio" name="rightColumn" value="1"
-			'.(Configuration::get('Sendin_RightColumn', '', $this->id_shop_group, $this->id_shop) == 1 ? 'checked="checked" ' : '').'/>'.$this->l('Show').'
-			<input type="radio" class="rightColumn radio_spaceing2" id="noradio"
-			name="rightColumn" value="2" '.(Configuration::get('Sendin_RightColumn', '', $this->id_shop_group, $this->id_shop) == 2 ? 'checked="checked" ' : '').'/>'
-			.$this->l('Hide').'
-		</div>	
-		<div>
-			<label>
-			'.$this->l('Left column block').'
-			</label>
-			<span class="'.$this->cl_version.'">
-			<input type="radio" class="leftColumn radio_nospaceing" id="yesradio" name="leftColumn" value="1"
-			'.(Configuration::get('Sendin_LeftColumn', '', $this->id_shop_group, $this->id_shop) == 1 ? 'checked="checked" ' : '').'/>'.$this->l('Show').'
-			<input type="radio" class="leftColumn radio_spaceing2" id="noradio"
-			name="leftColumn" value="2" '.(Configuration::get('Sendin_LeftColumn', '', $this->id_shop_group, $this->id_shop) == 2 ? 'checked="checked" ' : '').'/>'
-			.$this->l('Hide').'
-		</div>
-		<div>
-			<label>
-			'.$this->l('Top block').'
-			</label>
-			<span class="'.$this->cl_version.'">
-			<input type="radio" class="top radio_nospaceing" id="yesradio" name="top" value="1"
-			'.(Configuration::get('Sendin_Top', '', $this->id_shop_group, $this->id_shop) == 1 ? 'checked="checked" ' : '').'/>'.$this->l('Show').'
-			<input type="radio" class="top radio_spaceing2" id="noradio"
-			name="top" value="2" '.(Configuration::get('Sendin_Top', '', $this->id_shop_group, $this->id_shop) == 2 ? 'checked="checked" ' : '').'/>'
-			.$this->l('Hide').'
-		</div>	
-		<div>
-			<label>
-			'.$this->l('Footer block').'
-			</label>
-			<span class="'.$this->cl_version.'">
-			<input type="radio" class="footer radio_nospaceing" id="yesradio" name="footer" value="1"
-			'.(Configuration::get('Sendin_Footer', '', $this->id_shop_group, $this->id_shop) == 1 ? 'checked="checked" ' : '').'/>'.$this->l('Show').'
-			<input type="radio" class="footer radio_spaceing2" id="noradio"
-			name="footer" value="2" '.(Configuration::get('Sendin_Footer', '', $this->id_shop_group, $this->id_shop) == 2 ? 'checked="checked" ' : '').'/>'
-			.$this->l('Hide').'
-		</div>
-		</div>
-		</td></tr></form>';
-			$option = '<option value="">'.$this->l('Select hook').'</option>';
-			$modules = Module::getModulesInstalled();
-			foreach ($modules as $module)
+		$option = '<option value="">'.$this->l('Select hook').'</option>';
+		$modules = Module::getModulesInstalled();
+		$module_data = array();
+		foreach ($modules as $module)
+		{
+			if ($module['name'] == 'sendinblue')
 			{
-				if ($module['name'] == 'sendinblue')
-				{
-					$module_data = array();
-					$module_data = $module;
-				}
+				$module_data = $module;
+				break;
 			}
-			$id_shop = $this->id_shop ? $this->id_shop : '1';
+		}
+
+		$idshop = $this->id_shop ? $this->id_shop : '1';
+		if (version_compare(_PS_VERSION_, '1.5', '<'))
+		$condition_position = '';
+		else
+		$condition_position = ' AND `id_shop` = '.(int)$idshop.'';
+
+		$sql = 'SELECT * FROM `'._DB_PREFIX_.'hook_module` WHERE `id_module` = '.(int)$module_data['id_module'].$condition_position;
+		$result = Db::getInstance()->executeS($sql);
+		foreach	($result as $row)
+		{
+			$hook = new Hook($row['id_hook']);
 			if (version_compare(_PS_VERSION_, '1.5', '<'))
-			$condition_position = '';
-			else
-			$condition_position = ' AND `id_shop` = '.(int)$id_shop.'';
-
-			$sql = 'SELECT * FROM `'._DB_PREFIX_.'hook_module` WHERE `id_module` = '.(int)$module_data['id_module'].$condition_position;
-			$result = Db::getInstance()->executeS($sql);
-			foreach	($result as $row)
 			{
-				$hook = new Hook($row['id_hook']);
-				if (version_compare(_PS_VERSION_, '1.5', '<'))
-				{
-					if ($hook->name == 'rightColumn' || $hook->name == 'leftColumn' || $hook->name == 'top' || $hook->name == 'footer')
-					$option .= '<option value="'.$row['id_hook'].'">'.$hook->name.'</option>';
-				}
-				else
-				{
-					if ($hook->name == 'displayRightColumn' || $hook->name == 'displayLeftColumn' || $hook->name == 'displayTop' || $hook->name == 'displayFooter')
-					$option .= '<option value="'.$row['id_hook'].'">'.$hook->name.'</option>';
-				}
+				if ($hook->name == 'rightColumn' || $hook->name == 'leftColumn' || $hook->name == 'top' || $hook->name == 'footer')
+				$option .= '<option value="'.$row['id_hook'].'">'.$hook->name.'</option>';
 			}
-
-			$this->_html_block_position .= '
-			<form method="post" name="pageposition" id="pageposition" action="'.Tools::safeOutput($_SERVER['REQUEST_URI']).'">
-			<input type="hidden" name="hookerrormsg" value="'.$this->l('Select hook').'" id="hookerrormsg">
-			<tr id="position2" >
-				<td style="float: left; margin-left:300px;">
-					<label style="float: left; width: 150px">'.$this->l('Select hook :').'</label>
-					<select name="hooksname" id="hooksname">'.$option.'</select>
-				</td>
-			</tr>
-
-			<tr id="position" >
-				<td style="float: left; margin-left: 300px; height:auto;">
-					<label style="float: left; width: 150px">Exceptions :</label>
-					<div style="float:left; width:240px;" class="'.$this->cl_version.'">
-						'.$this->l('Please specify the files for which you don\'t want the newsletter\'s subscription form be displayed. Filename should be separated by a comma.').'
-						<br>
-						<input id="em_text_val" type="text" value="auth" size="40" name="em_text_val">
-						<br>
-						<div id="div_position">
-						<p style="padding-top:10px;">'.$this->l('Select the pages where you want to hide our newsletter\'s subscription form').':</p>
-						<select id="oem_list" style="width:237px" multiple="multiple" size="10">
-						<option value="address">address</option>
-							<option value="addresses">addresses</option>
-							<option value="attachment">attachment</option>
-							<option value="auth">auth</option>
-							<option value="bestsales">bestsales</option>
-							<option value="cart">cart</option>
-							<option value="category">category</option>
-							<option value="changecurrency">changecurrency</option>
-							<option value="cms">cms</option>
-							<option value="compare">compare</option>
-							<option value="contact">contact</option>
-							<option value="discount">discount</option>
-							<option value="getfile">getfile</option>
-							<option value="guesttracking">guesttracking</option>
-							<option value="history">history</option>
-							<option value="identity">identity</option>
-							<option value="index">index</option>
-							<option value="manufacturer">manufacturer</option>
-							<option value="myaccount">myaccount</option>
-							<option value="newproducts">newproducts</option>
-							<option value="order">order</option>
-							<option value="orderconfirmation">orderconfirmation</option>
-							<option value="orderdetail">orderdetail</option>
-							<option value="orderfollow">orderfollow</option>
-							<option value="orderopc">orderopc</option>
-							<option value="orderreturn">orderreturn</option>
-							<option value="orderslip">orderslip</option>
-							<option value="pagenotfound">pagenotfound</option>
-							<option value="parentorder">parentorder</option>
-							<option value="password">password</option>
-							<option value="pdfinvoice">pdfinvoice</option>
-							<option value="pdforderreturn">pdforderreturn</option>
-							<option value="pdforderslip">pdforderslip</option>
-							<option value="pricesdrop">pricesdrop</option>
-							<option value="product">product</option>
-							<option value="search">search</option>
-							<option value="sitemap">sitemap</option>
-							<option value="statistics">statistics</option>
-							<option value="stores">stores</option>
-							<option value="supplier">supplier</option>
-						</select>
-					</div>	
-				&nbsp;
-					<input type="submit" style="float:left; margin-top:5px;"  class="button validationHook" value="'.$this->l('Save').'" name="pagepositionbtn" id="pagepositionbtn">
-				</div>
-				</td>
-			</tr>			</form>
-			</table>';
-
-		return $this->_html_block_position;
+			else
+			{
+				if ($hook->name == 'displayRightColumn')
+					$option .= '<option value="'.$row['id_hook'].'">rightColumn</option>';
+				if ($hook->name == 'displayLeftColumn')
+					$option .= '<option value="'.$row['id_hook'].'">leftColumn</option>';
+				if ($hook->name == 'displayTop')
+					$option .= '<option value="'.$row['id_hook'].'">top</option>';
+				if ($hook->name == 'displayFooter')
+					$option .= '<option value="'.$row['id_hook'].'">footer</option>';
+			}
+		}
+		$this->context->smarty->assign('option', $option);
+		$this->context->smarty->assign('Sendin_RightColumn', $sendin_right_column);
+		$this->context->smarty->assign('Sendin_LeftColumn', $sendin_left_column);
+		$this->context->smarty->assign('Sendin_Top', $sendin_top);
+		$this->context->smarty->assign('Sendin_Footer', $sendin_footer);
+		$this->context->smarty->assign('form_url', Tools::safeOutput($_SERVER['REQUEST_URI']));
+		$this->context->smarty->assign('cl_version', $this->cl_version);
+		return $this->display(__FILE__, 'views/templates/admin/hookposition.tpl');
 	}
 
 	/**
@@ -3175,7 +3067,7 @@ class Sendinblue extends Module {
 			$excepts = explode(',', $em_text_val);
 			$id_hook = Tools::getValue('hooksname');
 			$this->registerExceptions($id_hook, $excepts, $this->id_shop);
-			return $this->redirectPage($this->l('Setting updated'), 'SUCCESS');	
+			return $this->redirectPage($this->l('Setting updated'), 'SUCCESS');
 		}
 	}
 
@@ -3210,6 +3102,7 @@ class Sendinblue extends Module {
 			elseif ($blockvalue == 2)
 				$this->unregisterHook($blockname);
 		}
+
 		Configuration::updateValue('Sendin_'.Tools::ucfirst($blockname), $blockvalue, '', $groupid, $shopid);
 	}
 
