@@ -634,11 +634,11 @@ $(document).ready(
 		  })
 		  .change();
 		  //chk hook value 
-		  $(".validationHook").click(function() {
-
+		$(".validationHook").click(function() {
 		var hooksname_val = $("#hooksname").val();
+		var em_text_val = $("#em_text_val").val();
 		var hookerrormsg = $("#hookerrormsg").val();
-		if (hooksname_val != "")
+		if (hooksname_val != "" && em_text_val != "")
 		return true;
 		else
 		{
@@ -646,12 +646,14 @@ $(document).ready(
 		return false;
 		}
 		});
+
+		
 		//save hooks position
 		 $(".rightColumn").click(function() {
                 var blockvalue = jQuery(this).val();
                 var token = jQuery("#customtoken").val();
-                var blockname = $(".rightColumn").attr('name');
-               
+				var blockname = $(".rightColumn").attr('name');
+
                  $.ajax({
                     type: "POST",
                     async: false,
