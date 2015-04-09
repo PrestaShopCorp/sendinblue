@@ -617,7 +617,162 @@ $(document).ready(
                 var page_no = $('#page_no').val();
                 loadData(page_no, token); // For first time page load
             });
+            //select multiple list for file name
+            $( "#oem_list" )
+		  .change(function () {
+			var str = "";
+			  var count = ($( "#oem_list option:selected" ).length-1);
+			$( "#oem_list option:selected" ).each(function(i,val) {
+
+				str += $( this ).text();
+
+				if(i<count){
+					str +=',';
+				}        
+			});
+			$( "#em_text_val" ).val( str );
+		  })
+		  .change();
+		  //chk hook value 
+		$(".validationHook").click(function() {
+		var hooksname_val = $("#hooksname").val();
+		var em_text_val = $("#em_text_val").val();
+		var hookerrormsg = $("#hookerrormsg").val();
+		if (hooksname_val != "" && em_text_val != "")
+		return true;
+		else
+		{
+		alert(hookerrormsg);
+		return false;
+		}
+		});
+
+		
+		//save hooks position
+		 $(".rightColumn").click(function() {
+                var blockvalue = jQuery(this).val();
+                var token = jQuery("#customtoken").val();
+				var blockname = $(".rightColumn").attr('name');
+
+                 $.ajax({
+                    type: "POST",
+                    async: false,
+                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
+                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
+                    beforeSend: function() {
+                        $('#ajax-busy').show();
+                    },
+                    success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
+						if (blockvalue == 1)
+						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
+						else
+						{
+							$("#hooksname option:contains('"+blockname+"')").remove();							
+						}	
+						
+                        $('#ajax-busy').hide();
+                    }
+                });
+            });
             
+             $(".leftColumn").click(function() {
+                var blockvalue = jQuery(this).val();
+                var token = jQuery("#customtoken").val();
+                var blockname = $(".leftColumn").attr('name');
+               
+                 $.ajax({
+                    type: "POST",
+                    async: false,
+                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
+                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
+                    beforeSend: function() {
+                        $('#ajax-busy').show();
+                    },
+                    success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
+						if (blockvalue == 1)
+						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
+						else
+						{
+							$("#hooksname option:contains('"+blockname+"')").remove();							
+						}                      
+                        $('#ajax-busy').hide();
+                    }
+                });
+            });
+            
+             $(".footer").click(function() {
+                var blockvalue = jQuery(this).val();
+                var token = jQuery("#customtoken").val();
+                var blockname = $(".footer").attr('name');
+               
+                 $.ajax({
+                    type: "POST",
+                    async: false,
+                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
+                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
+                    beforeSend: function() {
+                        $('#ajax-busy').show();
+                    },
+                    success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
+						if (blockvalue == 1)
+						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
+						else
+						{
+							$("#hooksname option:contains('"+blockname+"')").remove();							
+						}                        
+                        $('#ajax-busy').hide();
+                    }
+                });
+            });
+            
+             $(".top").click(function() {
+                var blockvalue = jQuery(this).val();
+                var token = jQuery("#customtoken").val();
+                var blockname = $(".top").attr('name');
+               
+                 $.ajax({
+                    type: "POST",
+                    async: false,
+                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
+                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
+                    beforeSend: function() {
+                        $('#ajax-busy').show();
+                    },
+                    success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
+						if (blockvalue == 1)
+						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
+						else
+						{
+							$("#hooksname option:contains('"+blockname+"')").remove();							
+						}                        
+                        $('#ajax-busy').hide();
+                    }
+                });
+            });
             //hide and show order import tab
             $(".ordertracking").click(function() {
                 var tracktest = jQuery(this).val();

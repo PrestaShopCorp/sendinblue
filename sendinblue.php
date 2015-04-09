@@ -66,7 +66,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.3';
+		$this->version = '2.4';
 
 		parent::__construct();
 
@@ -1771,6 +1771,9 @@ class Sendinblue extends Module {
 			// send test sms to check if SMS is working or not.
 		if (Tools::isSubmit('notify_sms_mail'))
 			$this->sendSmsNotify();
+			// our newsletter blocks display and hide in Front Office.
+		if (Tools::isSubmit('pagepositionbtn'))
+			$this->hooksPagePosition();
 		// update SMTP configuration in PrestaShop
 		if (Tools::isSubmit('smtpupdate'))
 		{
@@ -2814,7 +2817,7 @@ class Sendinblue extends Module {
 	*/
 	public function codeDeTracking()
 	{
-		$this->html_code_tracking .= '<br/>
+		$this->html_code_tracking .= '
 			<table class="table tableblock hidetableblock form-data" style="margin-top:15px;" cellspacing="0" cellpadding="0" width="100%">
 			<thead>
 			<tr>
@@ -2993,6 +2996,115 @@ class Sendinblue extends Module {
 
 		return $this->_html_smtp_tracking;
 	}
+	/**
+	* Our newsletter blocks display and hide in Front Office.
+	*/
+	public function foBlockPosition()
+	{
+		$sendin_right_column = Configuration::get('Sendin_RightColumn', '', $this->id_shop_group, $this->id_shop);
+		$sendin_left_column = Configuration::get('Sendin_LeftColumn', '', $this->id_shop_group, $this->id_shop);
+		$sendin_top = Configuration::get('Sendin_Top', '', $this->id_shop_group, $this->id_shop);
+		$sendin_footer = Configuration::get('Sendin_Footer', '', $this->id_shop_group, $this->id_shop);
+
+		$option = '<option value="">'.$this->l('Select hook').'</option>';
+		$modules = Module::getModulesInstalled();
+		$module_data = array();
+		foreach ($modules as $module)
+		{
+			if ($module['name'] == 'sendinblue')
+			{
+				$module_data = $module;
+				break;
+			}
+		}
+
+		$idshop = $this->id_shop ? $this->id_shop : '1';
+		if (version_compare(_PS_VERSION_, '1.5', '<'))
+		$condition_position = '';
+		else
+		$condition_position = ' AND `id_shop` = '.(int)$idshop.'';
+
+		$sql = 'SELECT * FROM `'._DB_PREFIX_.'hook_module` WHERE `id_module` = '.(int)$module_data['id_module'].$condition_position;
+		$result = Db::getInstance()->executeS($sql);
+		foreach	($result as $row)
+		{
+			$hook = new Hook($row['id_hook']);
+			if (version_compare(_PS_VERSION_, '1.5', '<'))
+			{
+				if ($hook->name == 'rightColumn' || $hook->name == 'leftColumn' || $hook->name == 'top' || $hook->name == 'footer')
+				$option .= '<option value="'.$row['id_hook'].'">'.$hook->name.'</option>';
+			}
+			else
+			{
+				if ($hook->name == 'displayRightColumn')
+					$option .= '<option value="'.$row['id_hook'].'">rightColumn</option>';
+				if ($hook->name == 'displayLeftColumn')
+					$option .= '<option value="'.$row['id_hook'].'">leftColumn</option>';
+				if ($hook->name == 'displayTop')
+					$option .= '<option value="'.$row['id_hook'].'">top</option>';
+				if ($hook->name == 'displayFooter')
+					$option .= '<option value="'.$row['id_hook'].'">footer</option>';
+			}
+		}
+		$this->context->smarty->assign('option', $option);
+		$this->context->smarty->assign('Sendin_RightColumn', $sendin_right_column);
+		$this->context->smarty->assign('Sendin_LeftColumn', $sendin_left_column);
+		$this->context->smarty->assign('Sendin_Top', $sendin_top);
+		$this->context->smarty->assign('Sendin_Footer', $sendin_footer);
+		$this->context->smarty->assign('form_url', Tools::safeOutput($_SERVER['REQUEST_URI']));
+		$this->context->smarty->assign('cl_version', $this->cl_version);
+		return $this->display(__FILE__, 'views/templates/admin/hookposition.tpl');
+	}
+
+	/**
+	*Display and hide page wise our block in FrontEnd function
+	*/
+	public function hooksPagePosition()
+	{
+		if (Tools::isSubmit('pagepositionbtn') == 'Save')
+		{
+			$em_text_val = Tools::getValue('em_text_val');
+			$excepts = explode(',', $em_text_val);
+			$id_hook = Tools::getValue('hooksname');
+			$this->registerExceptions($id_hook, $excepts, $this->id_shop);
+			return $this->redirectPage($this->l('Setting updated'), 'SUCCESS');
+		}
+	}
+
+	/**
+	*Display and hide our block in FrontEnd function
+	*/
+	public function hooksPosition($blockname, $blockvalue, $groupid, $shopid)
+	{
+		if (version_compare(_PS_VERSION_, '1.5', '<'))
+		{
+			$result = Db::getInstance()->getRow('
+			SELECT `id_hook`
+			FROM `'._DB_PREFIX_.'hook`
+			WHERE `name` = \''.pSQL($blockname).'\'');
+
+			if ($blockvalue == 1)
+			{
+			$this->registerHook($blockname);
+			echo $result['id_hook'];
+			}
+			elseif ($blockvalue == 2)
+				$this->unregisterHook($result['id_hook']);
+		}
+		else
+		{
+			if ($blockvalue == 1)
+			{
+				$this->registerHook($blockname);
+				$id_hook = Hook::getIdByName($blockname);
+				echo $id_hook;
+			}
+			elseif ($blockvalue == 2)
+				$this->unregisterHook($blockname);
+		}
+
+		Configuration::updateValue('Sendin_'.Tools::ucfirst($blockname), $blockvalue, '', $groupid, $shopid);
+	}
 
 	/**
 	* Displays the SMS details in the SMS block.
@@ -3059,7 +3171,7 @@ class Sendinblue extends Module {
 ').'<br /><br />'.$this->l('Email : ').'<a href="mailto:'.$this->l('contact@sendinblue.com').'" style="color:#268CCD;">'.
 $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61').'</p>
 		<p style="padding-top:20px;"><b>'.$this->l('For further informations, please visit our website:').
-		'</b><br /><a href="'.$this->l('https://www.sendinblue.com').'" target="_blank"
+		'</b><br /><a href="'.$this->l('https://www.sendinblue.com?utm_source=prestashop_plugin&utm_medium=plugin&utm_campaign=module_link').'" target="_blank"
 		style="color:#268CCD;">'.$this->l('https://www.sendinblue.com').'</a></p>
 		</div>
 		<p>'.$this->l('With the SendinBlue plugin, you can find everything you need to easily and efficiently send your email & SMS campaigns to your prospects and customers. ').'</p>
@@ -3097,7 +3209,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		<legend><img src="'.$this->local_path.$this->name.'/logo.gif" alt="" />'.$this->l('Prerequisites').'</legend>';
 		$this->_html .= '<label">-
 		'.$this->l('You should have a SendinBlue account. You can create a free account here : ').
-		'<a href="'.$this->l('https://www.sendinblue.com').'" class="link_action" style="color:#268CCD;"  target="_blank">&nbsp;'.$this->l('https://www.sendinblue.com').'</a></label><br />';
+		'<a href="'.$this->l('https://www.sendinblue.com?utm_source=prestashop_plugin&utm_medium=plugin&utm_campaign=module_link').'" class="link_action" style="color:#268CCD;"  target="_blank">&nbsp;'.$this->l('https://www.sendinblue.com').'</a></label><br />';
 
 		if (!extension_loaded('curl') || !ini_get('allow_url_fopen'))
 			$this->_html .= '<label">-
@@ -3136,6 +3248,7 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		{
 			$this->_html .= $this->syncronizeBlockCode();
 			$this->_html .= $this->mailSendBySmtp();
+			$this->_html .= $this->foBlockPosition();
 			$this->_html .= $this->codeDeTracking();
 			$this->_html .= $this->mailSendBySms();
 			$this->_html .= $this->displayNewsletterEmail();
@@ -3366,6 +3479,10 @@ $this->l('contact@sendinblue.com').'</a><br />'.$this->l('Phone : 0899 25 30 61'
 		Configuration::deleteByName('Sendin_Api_Sms_Credit');
 		Configuration::deleteByName('Sendin_Notify_Cron_Executed');
 		Configuration::deleteByName('Sendin_Template_Id');
+		Configuration::deleteByName('Sendin_Rightblock');
+		Configuration::deleteByName('Sendin_Leftblock');
+		Configuration::deleteByName('Sendin_Top');
+		Configuration::deleteByName('Sendin_Footer');
 
 		if (Configuration::get('Sendin_Api_Smtp_Status'))
 		{

@@ -352,3 +352,7 @@ nobootstrap {
 }
 
 .form-display .margin-form{ font-size:12px!important;}
+.rightblock{height:20px;}
+.leftblock{height:20px;}
+.top{height:20px;}
+.footer_sendin{height:20px!important; font-size:12px!important; padding-top:0!important;}
