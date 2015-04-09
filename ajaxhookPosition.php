@@ -25,11 +25,16 @@
 */
 
 include(dirname(__FILE__).'/../../config/config.inc.php');
-include_once(_PS_CLASS_DIR_.'/../classes/Customer.php');
 include(dirname(__FILE__).'/sendinblue.php');
 
 if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME')))
 	die('Error: Invalid Token');
 
 $sendin = new Sendinblue();
-$sendin->hooksPosition(Tools::getValue('blockname'), Tools::getValue('blockvalue'), Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
+$blockname_value = Tools::getValue('blockname');
+$blockvalue_value = Tools::getValue('blockvalue');
+
+if (!empty($blockname_value) && !empty($blockvalue_value))
+	$sendin->hooksPosition($blockname_value, $blockvalue_value, Tools::getValue('id_shop_group'), Tools::getValue('id_shop'));
+else
+	echo 'blank_value';

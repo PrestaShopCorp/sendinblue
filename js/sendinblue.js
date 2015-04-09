@@ -663,6 +663,12 @@ $(document).ready(
                         $('#ajax-busy').show();
                     },
                     success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
 						if (blockvalue == 1)
 						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
 						else
@@ -689,6 +695,12 @@ $(document).ready(
                         $('#ajax-busy').show();
                     },
                     success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
 						if (blockvalue == 1)
 						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
 						else
@@ -714,6 +726,12 @@ $(document).ready(
                         $('#ajax-busy').show();
                     },
                     success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
 						if (blockvalue == 1)
 						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
 						else
@@ -739,6 +757,12 @@ $(document).ready(
                         $('#ajax-busy').show();
                     },
                     success: function(msg) {
+						if (msg == 'blank_value')
+						{
+							alert('Something went wrong, try again');
+							$('#ajax-busy').hide();
+							return false;
+						}
 						if (blockvalue == 1)
 						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
 						else
