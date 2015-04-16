@@ -54,6 +54,8 @@ class Sendinblue extends Module {
 	public $error;
 	public $_html = null;
 	public $local_path;
+	public $_second_block_code;
+	public $_html_smtp_tracking;
 
 	/**
 	* class constructor
@@ -66,7 +68,7 @@ class Sendinblue extends Module {
 		else
 		$this->tab = 'advertising_marketing';
 		$this->author = 'SendinBlue';
-		$this->version = '2.4';
+		$this->version = '2.5';
 
 		parent::__construct();
 
