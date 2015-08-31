@@ -60,13 +60,13 @@
                    
                            <div id="errmsg" style="color:#F00"></div>
                            <p  class="form-data"><label>{l s='Email' mod='sendinblue'}</label>
-                            <input name="sendin_notify_email" id="sendin_notify_email" type="text" value="{$Sendin_Notify_Email|escape:'htmlall':'UTF-8'}" size="40" /></p>
+                            <input name="sendin_notify_email" id="sendin_notify_email" type="text" value="{$Sendin_Notify_Email|escape:'quotes':'UTF-8'}" size="40" /></p>
 							<p  class="form-data"> <label>{l s='Limit' mod='sendinblue'}</label>
-                           <input name="sendin_notify_value" id="sendin_notify_value" type="text" value="{$Sendin_Notify_Value}" size="40" /><span style="position:absolute;" class="toolTip" title="{l s='Alert threshold for remaining credits' mod='sendinblue'}"></span></p>
+                           <input name="sendin_notify_value" id="sendin_notify_value" type="text" value="{$Sendin_Notify_Value|escape:'quotes':'UTF-8'}" size="40" /><span style="position:absolute;" class="toolTip" title="{l s='Alert threshold for remaining credits' mod='sendinblue'}"></span></p>
 							<p  class="form-data"><input name="notify_sms_mail" type="submit"  onClick="return validate('{l s='Please provide valid Email!' mod='sendinblue'}','{l s='Please provide a limit greater than 0' mod='sendinblue'}');" value="{l s='Save' mod='sendinblue'}" class="button" style=" margin-left: 658px;" /></p>
-							<p  class="mrgin-left">{l s='To get the email notification, you should run ' mod='sendinblue'}{$link}{l s=' atleast one time per day. ' mod='sendinblue'}
+							<p  class="mrgin-left">{l s='To get the email notification, you should run ' mod='sendinblue'}{$link|escape:'quotes':'UTF-8'}{l s=' atleast one time per day. ' mod='sendinblue'}
 							<span class="toolTip" title="{l s='Note that if you change the name of your Shop (currently ' mod='sendinblue'}
-			        {$site_name|escape:'htmlall':'UTF-8'}{l s=') the token value changes.' mod='sendinblue'}">&nbsp;</span></p>
+			        {$site_name|escape:'quotes':'UTF-8'}{l s=') the token value changes.' mod='sendinblue'}">&nbsp;</span></p>
                           
                           </form>
                         </div>

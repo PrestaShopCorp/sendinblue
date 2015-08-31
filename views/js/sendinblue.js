@@ -25,11 +25,10 @@
 
 $(document).ready(
         function() {
-
-
             var token = jQuery("#customtoken").val();
 			var id_shop_group = jQuery("#id_shop_group").val();
 			var id_shop = jQuery("#id_shop").val();
+            var iso_code = jQuery('#iso_code').val();
 
             if (!$('#apikeybox').is(':hidden')) {
 
@@ -64,7 +63,7 @@ $(document).ready(
 
                     }
                 }
-				
+
 				$("#sender_order").keydown(function (event) {
 					if (event.keyCode == 32) {
                     event.preventDefault();
@@ -249,7 +248,6 @@ $(document).ready(
                             }
                         }
                     });
-
                 });
                 $(".sms_shiping_setting").click(function() {
                     var shipingSetting = jQuery(this).val();
@@ -559,7 +557,7 @@ $(document).ready(
                                 left: 0,
                                 width: '100%',
                                 height: $(window).height() + 'px',
-                                background: 'white url(' + base_url + 'modules/sendinblue/img/loader.gif) no-repeat center'
+                                background: 'white url(' + base_url + 'modules/sendinblue/views/img/loader.gif) no-repeat center'
                             }).hide().appendTo('body');
 
             $('.ajax_contacts_href').live('click', function(e) {
@@ -633,146 +631,7 @@ $(document).ready(
 			$( "#em_text_val" ).val( str );
 		  })
 		  .change();
-		  //chk hook value 
-		$(".validationHook").click(function() {
-		var hooksname_val = $("#hooksname").val();
-		var em_text_val = $("#em_text_val").val();
-		var hookerrormsg = $("#hookerrormsg").val();
-		if (hooksname_val != "" && em_text_val != "")
-		return true;
-		else
-		{
-		alert(hookerrormsg);
-		return false;
-		}
-		});
 
-		
-		//save hooks position
-		 $(".rightColumn").click(function() {
-                var blockvalue = jQuery(this).val();
-                var token = jQuery("#customtoken").val();
-				var blockname = $(".rightColumn").attr('name');
-
-                 $.ajax({
-                    type: "POST",
-                    async: false,
-                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
-                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
-                    beforeSend: function() {
-                        $('#ajax-busy').show();
-                    },
-                    success: function(msg) {
-						if (msg == 'blank_value')
-						{
-							alert('Something went wrong, try again');
-							$('#ajax-busy').hide();
-							return false;
-						}
-						if (blockvalue == 1)
-						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
-						else
-						{
-							$("#hooksname option:contains('"+blockname+"')").remove();							
-						}	
-						
-                        $('#ajax-busy').hide();
-                    }
-                });
-            });
-            
-             $(".leftColumn").click(function() {
-                var blockvalue = jQuery(this).val();
-                var token = jQuery("#customtoken").val();
-                var blockname = $(".leftColumn").attr('name');
-               
-                 $.ajax({
-                    type: "POST",
-                    async: false,
-                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
-                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
-                    beforeSend: function() {
-                        $('#ajax-busy').show();
-                    },
-                    success: function(msg) {
-						if (msg == 'blank_value')
-						{
-							alert('Something went wrong, try again');
-							$('#ajax-busy').hide();
-							return false;
-						}
-						if (blockvalue == 1)
-						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
-						else
-						{
-							$("#hooksname option:contains('"+blockname+"')").remove();							
-						}                      
-                        $('#ajax-busy').hide();
-                    }
-                });
-            });
-            
-             $(".footer").click(function() {
-                var blockvalue = jQuery(this).val();
-                var token = jQuery("#customtoken").val();
-                var blockname = $(".footer").attr('name');
-               
-                 $.ajax({
-                    type: "POST",
-                    async: false,
-                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
-                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
-                    beforeSend: function() {
-                        $('#ajax-busy').show();
-                    },
-                    success: function(msg) {
-						if (msg == 'blank_value')
-						{
-							alert('Something went wrong, try again');
-							$('#ajax-busy').hide();
-							return false;
-						}
-						if (blockvalue == 1)
-						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
-						else
-						{
-							$("#hooksname option:contains('"+blockname+"')").remove();							
-						}                        
-                        $('#ajax-busy').hide();
-                    }
-                });
-            });
-            
-             $(".top").click(function() {
-                var blockvalue = jQuery(this).val();
-                var token = jQuery("#customtoken").val();
-                var blockname = $(".top").attr('name');
-               
-                 $.ajax({
-                    type: "POST",
-                    async: false,
-                    url: base_url + "modules/sendinblue/ajaxhookPosition.php",
-                    data: {"blockname": blockname, "blockvalue": blockvalue, "token": token, "id_shop_group":id_shop_group, "id_shop":id_shop},
-                    beforeSend: function() {
-                        $('#ajax-busy').show();
-                    },
-                    success: function(msg) {
-						if (msg == 'blank_value')
-						{
-							alert('Something went wrong, try again');
-							$('#ajax-busy').hide();
-							return false;
-						}
-						if (blockvalue == 1)
-						$("#hooksname").append('<option value="'+msg+'">'+ blockname +'</option>');
-						else
-						{
-							$("#hooksname option:contains('"+blockname+"')").remove();							
-						}                        
-                        $('#ajax-busy').hide();
-                    }
-                });
-            });
             //hide and show order import tab
             $(".ordertracking").click(function() {
                 var tracktest = jQuery(this).val();
@@ -873,17 +732,18 @@ $(document).ready(
     var number = $('#sender_order_number').val();
 	var id_shop_group = $('#id_shop_group').val();
 	var id_shop = $('#id_shop').val();
+    var iso_code = $('#iso_code').val();
 
     $.ajax({
         type: "POST",
         async: false,
         url: base_url
                 + "modules/sendinblue/ajaxtestsms.php",
-        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token, "id_shop_group": id_shop_group, "id_shop":id_shop},
+        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token, "id_shop_group": id_shop_group, "id_shop":id_shop,"iso_code":iso_code},
         beforeSend: function() {
             $('#ajax-busy').show();
         },
-        success: function(msg) { 
+        success: function(msg) {
             $('#ajax-busy').hide();
             var data =$.parseJSON(msg);
 
@@ -910,13 +770,14 @@ $('.testSmsShipped').live('click', function(){
     var number = $('#sender_shipment_number').val();
 	var id_shop_group = $('#id_shop_group').val();
 	var id_shop = $('#id_shop').val();
+    var iso_code = $('#iso_code').val();
 
     $.ajax({
         type: "POST",
         async: false,
         url: base_url
                 + "modules/sendinblue/ajaxTestSmsShipped.php",
-        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token, "id_shop_group": id_shop_group, "id_shop":id_shop},
+        data: {"sender": sender, "message": message, "number": number, "langvalue": langvalue, "token": token, "id_shop_group": id_shop_group, "id_shop":id_shop, "iso_code":iso_code},
         beforeSend: function() {
             $('#ajax-busy').show();
         },
