@@ -47,6 +47,8 @@ class Sendinblue extends Module
     
     private $post_errors = array();
     private $html_code_tracking;
+    private $_html_smtp_tracking;
+    private $_second_block_code;
     private $tracking;
     private $email;
     private $newsletter;
@@ -162,7 +164,7 @@ class Sendinblue extends Module
      */
     public function callhookRegister()
     {
-        if (_PS_VERSION_ >= 1.5 && Dispatcher::getInstance()->getController() == 'identity') {
+        if (version_compare(_PS_VERSION_, '1.5', '>=') && Dispatcher::getInstance()->getController() == 'identity') {
             if (Module::getInstanceByName('blocknewsletter')->active == 0) {
                 Module::getInstanceByName('blocknewsletter')->active = 1;
                 echo '<script type="text/javascript">
@@ -405,7 +407,7 @@ jQuery("#optin").closest("p.checkbox").hide();
      */
     public function restoreBlocknewsletterBlock()
     {
-        if (_PS_VERSION_ <= '1.4.1.0') {
+        if (version_compare(_PS_VERSION_, '1.4.1.0', '<=')) {
             Db::getInstance()->Execute('UPDATE `' . _DB_PREFIX_ . 'module` SET active = 1 WHERE name = "blocknewsletter"');
         } else {
             Module::enableByName('blocknewsletter');
@@ -451,7 +453,7 @@ jQuery("#optin").closest("p.checkbox").hide();
         if (version_compare(_PS_VERSION_, '1.5', '<') && self::isInstalled($this->name)) {
             foreach (array('2.2') as $version) {
                 $file = dirname(__FILE__) . '/upgrade/Upgrade-' . $version . '.php';
-                if (Configuration::get('Sendinblue_Version') < $version && file_exists($file)) {
+                if (version_compare(Configuration::get('Sendinblue_Version'), $version, '<') && file_exists($file)) {
                     include_once ($file);
                     call_user_func('upgrade_module_' . str_replace('.', '_', $version), $this);
                 }
@@ -461,7 +463,7 @@ jQuery("#optin").closest("p.checkbox").hide();
         $version = '2.5.1';
         $file = dirname(__FILE__) . '/upgrade/Upgrade-' . $version . '.php';
         
-        if (Configuration::get('Sendinblue_Version') < $version && file_exists($file)) {
+        if (version_compare(Configuration::get('Sendinblue_Version'), $version, '<') && file_exists($file)) {
             include_once ($file);
             call_user_func('upgrade_module_' . str_replace('.', '_', $version), $this);
         }
@@ -476,7 +478,7 @@ jQuery("#optin").closest("p.checkbox").hide();
     {
         Db::getInstance()->Execute('TRUNCATE table  ' . _DB_PREFIX_ . 'sendin_newsletter');
         
-        if (_PS_VERSION_ >= '1.5.3.0') {
+        if (version_compare(_PS_VERSION_, '1.5.3.0', '>=')) {
             Db::getInstance()->Execute('INSERT INTO  ' . _DB_PREFIX_ . 'sendin_newsletter
 (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
 SELECT id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active FROM ' . _DB_PREFIX_ . 'newsletter');
@@ -497,7 +499,7 @@ SELECT email, newsletter_date_add, ip_registration_newsletter, http_referer FROM
             Db::getInstance()->Execute('TRUNCATE table  ' . _DB_PREFIX_ . 'newsletter');
         }
         
-        if (_PS_VERSION_ >= '1.5.3.0') {
+        if (version_compare(_PS_VERSION_, '1.5.3.0', '>=')) {
             Db::getInstance()->Execute('INSERT INTO  ' . _DB_PREFIX_ . 'newsletter
 (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
 SELECT id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active FROM ' . _DB_PREFIX_ . 'sendin_newsletter');
@@ -2827,7 +2829,7 @@ WHERE email = "' . pSQL($this->email) . '"');
      */
     public function syncronizeBlockCode()
     {
-        $this->_second_block_code.= '<style type="text/css">.tableblock tr td{padding:5px; border-bottom:0px;}</style>
+        $this->_second_block_code = '<style type="text/css">.tableblock tr td{padding:5px; border-bottom:0px;}</style>
         <form method="post" action="' . Tools::safeOutput($_SERVER['REQUEST_URI']) . '">
         <table class="table tableblock hidetableblock form-data" style="margin-top:15px;" cellspacing="0" cellpadding="0" width="100%">
         <thead>
@@ -2905,7 +2907,7 @@ WHERE email = "' . pSQL($this->email) . '"');
      */
     public function mailSendBySmtp()
     {
-        $this->_html_smtp_tracking.= '
+        $this->_html_smtp_tracking = '
         <table class="table tableblock hidetableblock form-data" style="margin-top:15px;"
         cellspacing="0" cellpadding="0" width="100%">
         <thead>
@@ -3399,7 +3401,7 @@ WHERE email = "' . pSQL($this->email) . '"');
                 $msgbody = Configuration::get('Sendin_Sender_Shipment_Message', '', $this->id_shop_group, $this->id_shop);
                 $total_pay = (isset($order->total_paid)) ? $order->total_paid : 0;
                 $total_pay = $total_pay . '' . $this->context->currency->iso_code;
-                if (_PS_VERSION_ < '1.5.0.0') {
+                if (version_compare(_PS_VERSION_, '1.5.0.0', '<')) {
                     $ref_num = (isset($order->id)) ? $order->id : '';
                 } else {
                     $ref_num = (isset($order->reference)) ? $order->reference : '';
@@ -3560,7 +3562,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         $customer_result = Db::getInstance()->ExecuteS('SELECT id_gender, firstname, lastname, newsletter  FROM ' . _DB_PREFIX_ . 'customer WHERE `id_customer` = ' . (int)$customerid);
         $id_delivery = (isset($params['objOrder']->id_address_delivery)) ? $params['objOrder']->id_address_delivery : 0;
         $address_delivery = Db::getInstance()->ExecuteS('SELECT * FROM ' . _DB_PREFIX_ . 'address WHERE `id_address` = ' . (int)$id_delivery);
-        if (_PS_VERSION_ < '1.5.0.0') {
+        if (version_compare(_PS_VERSION_, '1.5.0.0', '<')) {
             $ref_num = (isset($params['objOrder']->id)) ? $params['objOrder']->id : 0;
         } else {
             $ref_num = (isset($params['objOrder']->reference)) ? $params['objOrder']->reference : 0;
