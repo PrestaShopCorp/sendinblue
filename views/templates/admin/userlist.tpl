@@ -32,7 +32,7 @@
 	<tbody>
 	
 		<tr>
-			<td style="border-bottom:none;" class="{$cl_version}">{$middlelable|escape:"htmlentity"}
+			<td style="border-bottom:none;" class="{$cl_version|escape:'quotes':'UTF-8'}">{$middlelable|escape:'quotes':'UTF-8'}
 			</td>
 		</tr>
 		<tr id="userDetails" style="display:none;">

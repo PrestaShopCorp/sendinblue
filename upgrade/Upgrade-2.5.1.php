@@ -28,20 +28,19 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-function upgrade_module_2_2($module)
+function upgrade_module_2_5_1($module)
 {
-    $upgrade_version = '2.2';
+    $upgrade_version = '2.5.1';
     $module->upgrade_detail[$upgrade_version] = array();
     
     Configuration::updateValue('Sendinblue_Version', $upgrade_version);
     
     //sql update
-    if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'sendin_newsletter` LIKE \'id_shop\'') == false) {
-        Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'sendin_newsletter` ADD `id_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id`');
+    if (version_compare(_PS_VERSION_, '1.4.1.0', '<=')) {
+        Db::getInstance()->Execute('UPDATE `' . _DB_PREFIX_ . 'module` SET active = 1 WHERE name = "blocknewsletter"');
+    } else {
+        Module::enableByName('blocknewsletter');
     }
-    
-    if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'sendin_newsletter` LIKE \'id_group_shop\'') == false) {
-        Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'sendin_newsletter` ADD `id_group_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id_shop`');
-    }
+
     return $module;
 }

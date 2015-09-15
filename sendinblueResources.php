@@ -1,6 +1,6 @@
 <?php
 /**
- * 2007-2015 PrestaShop
+ * 2007-2014 PrestaShop
  *
  * NOTICE OF LICENSE
  *
@@ -19,29 +19,23 @@
  * needs please refer to http://www.prestashop.com for more information.
  *
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2007-2015 PrestaShop SA
+ * @copyright 2007-2014 PrestaShop SA
  * @license   http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
  * International Registered Trademark & Property of PrestaShop SA
  */
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
-function upgrade_module_2_2($module)
+class SendinblueResources
 {
-    $upgrade_version = '2.2';
-    $module->upgrade_detail[$upgrade_version] = array();
-    
-    Configuration::updateValue('Sendinblue_Version', $upgrade_version);
-    
-    //sql update
-    if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'sendin_newsletter` LIKE \'id_shop\'') == false) {
-        Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'sendin_newsletter` ADD `id_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id`');
+    /**
+     * check condition for less then 1.4.5 version.
+     */
+    public function checkConditionOlderVersion()
+    {
+        $configure = Tools::getValue('configure');
+        if ((!empty($configure) && $configure == 'sendinblue') || strpos($_SERVER['REQUEST_URI'], 'authentication.php') !== false || strpos($_SERVER['REQUEST_URI'], 'addresses.php') !== false) {
+            return true;
+        } else {
+            return false;
+        }
     }
-    
-    if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'sendin_newsletter` LIKE \'id_group_shop\'') == false) {
-        Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'sendin_newsletter` ADD `id_group_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id_shop`');
-    }
-    return $module;
 }

@@ -25,14 +25,32 @@
  */
 
 include (dirname(__FILE__) . '/../../config/config.inc.php');
-include (dirname(__FILE__) . '/sendinblue.php');
 
 if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'))) {
     die('Error: Invalid Token');
 }
 
-$id_shop_group = Tools::getValue('id_shop_group', 'NULL');
-$id_shop = Tools::getValue('id_shop', 'NULL');
-$sendin = new Sendinblue();
-$sendin->userStatus($id_shop_group, $id_shop);
-echo 'Cron executed successfully';
+$data = Tools::getValue('response');
+$res_value = Tools::jsonDecode($data, true);
+
+if (empty($res_value['errMsg'])) {
+    foreach ($res_value['result'] as $value) {
+        $result = Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'customer`
+			SET newsletter="' . pSQL($value['s']) . '",
+			newsletter_date_add = "' . pSQL($value['m']) . '"
+			WHERE email = "' . pSQL($value['e']) . '" ');
+        $result = Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'sendin_newsletter`
+			SET active="' . pSQL($value['s']) . '",
+			newsletter_date_add = "' . pSQL($value['m']) . '"
+			WHERE email = "' . pSQL($value['e']) . '" ');
+    }
+    
+    $handle = fopen(_PS_MODULE_DIR_ . 'sendinblue/csv/SyncToSendinblue.csv', 'w');
+    $key_value = array();
+    $key_value[] = '';
+    fputcsv($handle, $key_value, '');
+    fclose($handle);
+}
+
+echo 'done';
+exit;
