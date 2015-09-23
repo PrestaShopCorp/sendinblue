@@ -40,8 +40,8 @@ function upgrade_module_2_2($module)
         Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'sendin_newsletter` ADD `id_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id`');
     }
     
-    if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'sendin_newsletter` LIKE \'id_group_shop\'') == false) {
-        Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'sendin_newsletter` ADD `id_group_shop` BOOLEAN NOT NULL DEFAULT 1 AFTER `id_shop`');
+    if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'sendin_newsletter` LIKE \'id_shop_group\'') == false) {
+        Db::getInstance()->Execute('ALTER TABLE `' . _DB_PREFIX_ . 'sendin_newsletter` ADD `id_shop_group` BOOLEAN NOT NULL DEFAULT 1 AFTER `id_shop`');
     }
     return $module;
 }
