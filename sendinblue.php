@@ -74,7 +74,7 @@ class Sendinblue extends Module
             $this->tab = 'advertising_marketing';
         }
         $this->author = 'SendinBlue';
-        $this->version = '2.5.1';
+        $this->version = '2.5.2';
         
         parent::__construct();
         
