@@ -32,15 +32,18 @@ if (!class_exists('Customer')) {
     include_once (_PS_CLASS_DIR_ . '/../classes/Customer.php');
 }
 
-include_once (dirname(__FILE__) . '/sendinblueResources.php');
 if (version_compare(_PS_VERSION_, '1.4.5', '<')) {
+    require(_PS_CLASS_DIR_. '/../modules/sendinblue/Mailin.php');
+    include_once (_PS_CLASS_DIR_. '/../modules/sendinblue/sendinblueResources.php');
     $sendinblue_resources = new SendinblueResources();
     if ($sendinblue_resources->checkConditionOlderVersion()) {
-        include (dirname(__FILE__) . '/config.php');
+        include (_PS_CLASS_DIR_. '/../modules/sendinblue/config.php');
     }
 } else {
+    require(dirname(__FILE__) . '/Mailin.php');
     include (dirname(__FILE__) . '/config.php');
 }
+
 
 class Sendinblue extends Module
 {
@@ -74,7 +77,7 @@ class Sendinblue extends Module
             $this->tab = 'advertising_marketing';
         }
         $this->author = 'SendinBlue';
-        $this->version = '2.5.2';
+        $this->version = '2.5.3';
         
         parent::__construct();
         
@@ -164,17 +167,13 @@ class Sendinblue extends Module
      */
     public function callhookRegister()
     {
-        if (version_compare(_PS_VERSION_, '1.5', '>=') && Dispatcher::getInstance()->getController() == 'identity') {
-            if (Module::getInstanceByName('blocknewsletter')->active == 0) {
-                Module::getInstanceByName('blocknewsletter')->active = 1;
-                echo '<script type="text/javascript">
-window.onload=function(){
-jQuery("#newsletter").closest("p.checkbox").hide();
-jQuery("#optin").closest("p.checkbox").hide();
-};
-</script>';
-            }
-            
+        if (version_compare(_PS_VERSION_, '1.5', '>=')) {
+            $condition_identity = Dispatcher::getInstance()->getController() == 'identity';
+        } else {
+            $condition_identity = strpos($_SERVER['REQUEST_URI'], 'identity.php') !== false;
+        }
+
+        if ($condition_identity) {
             $this->newsletter = Tools::getValue('newsletter');
             $this->email = Tools::getValue('email');
             $id_country = Tools::getValue('id_country');
@@ -187,11 +186,16 @@ jQuery("#optin").closest("p.checkbox").hide();
             $this->months = Tools::getValue('months');
             $this->years = Tools::getValue('years');
             $birthday = ($this->years . '-' . $this->months . '-' . $this->days);
-            
+
+            echo '<script type="text/javascript">
+window.onload=function(){
+jQuery("#newsletter").append("<input type=hidden id=sendinflag value='.$this->newsletter.' name=sendinflag>");
+};
+</script>';
+
             // Load customer data for logged in user so that we can register his/her with sendinblue
-            
             $customer_data = $this->getCustomersByEmail($this->email);
-            
+
             // Check if client have records in customer table
             if (isset($customer_data) && count($customer_data) > 0 && !empty($customer_data[0]['id_customer'])) {
                 $newsletter_status = !empty($this->newsletter) ? $this->newsletter : $customer_data[0]['newsletter'];
@@ -247,10 +251,14 @@ jQuery("#optin").closest("p.checkbox").hide();
                         $phone_mobile = $this->checkMobileNumber($phone_mobile, (!empty($result['call_prefix']) ? $result['call_prefix'] : ''));
                         $phone_mobile = (!empty($phone_mobile)) ? $phone_mobile : '';
                     }
-                    
-                    // Code to update sendinblue with logged in user data.
-                    $this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter, $this->id_shop_group, $this->id_shop);
-                    $this->sendWsTemplateMail($this->email);
+
+                    if (Tools::isSubmit('submitIdentity')) {
+                        $this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter, $this->id_shop_group, $this->id_shop);
+
+                        if (Tools::getValue('sendinflag') === '0') {
+                            $this->sendWsTemplateMail($this->email);
+                        }
+                    }
                 }
             }
         } else {
@@ -3613,10 +3621,27 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
                 $data['from'] = Configuration::get('Sendin_Sender_Order', '', $this->id_shop_group, $this->id_shop);
                 $data['text'] = $msgbody;
                 $data['to'] = $number;
-                $this->sendSmsApi($data);
+
+                $api_key = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
+                $mailin = new Mailin("https://api.sendinblue.com/v2.0", $api_key);
+                $data_api = array( "email" => $this->context->customer->email);
+                $data_resp = $mailin->getUser($data_api);
+                $order_status = '';
+                if (!empty($data_resp['data']['transactional_attributes'])) {
+                    $transactional_data = $data_resp['data']['transactional_attributes'];
+                    foreach ($transactional_data as $data_chk) {
+                        if ($data_chk['ORDER_ID'] == $ref_num) {
+                            $order_status = $data_chk['ORDER_ID'];
+                        }
+                    }
+                }
+
+                if (empty($order_status)) {
+                    $this->sendSmsApi($data);
+                }
             }
         }
-        
+
         if (Configuration::get('Sendin_Api_Key_Status', '', $this->id_shop_group, $this->id_shop) == 1 && Configuration::get('Sendin_Tracking_Status', '', $this->id_shop_group, $this->id_shop) == 1 && $customer_result[0]['newsletter'] == 1) {
             $this->tracking = $this->trackingResult();
             $date_value = $this->getApiConfigValue();
