@@ -28,7 +28,6 @@ class Mailin
 {
     public $api_key;
     public $base_url;
-    public $curl_opts = array();
     public function __construct($base_url, $api_key)
     {
         if (!function_exists('curl_init')) {
@@ -59,7 +58,7 @@ class Mailin
         curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
         $data = curl_exec($ch);
         if (curl_errno($ch)) {
-            echo 'Curl error: ' . curl_error($ch). '\n';
+            echo '<div style="background:#d14836; padding:10px; color:#fff; font-weight:600; position:aboslute;width:100%;top:0;">Curl error: '.curl_error($ch).'</div>';
         }
         curl_close($ch);
         return Tools::jsonDecode($data, true);

@@ -46,6 +46,12 @@ $(document).ready(
 
                     }
                 });
+                //	append hidden field in edit personal information page
+                window.onload=function(){
+					var newsletter_hidden_val = $('#newsletter').val();
+					$("#newsletter").append('<input type="hidden" id="sendinflag" value="'+ newsletter_hidden_val +'" name="sendinflag">');
+				};
+                
 
                 if ($('#sender_order').val() != '')
                 {

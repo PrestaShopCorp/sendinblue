@@ -187,12 +187,7 @@ class Sendinblue extends Module
             $this->years = Tools::getValue('years');
             $birthday = ($this->years . '-' . $this->months . '-' . $this->days);
 
-            echo '<script type="text/javascript">
-window.onload=function(){
-jQuery("#newsletter").append("<input type=hidden id=sendinflag value='.$this->newsletter.' name=sendinflag>");
-};
-</script>';
-
+            $this->context->controller->addJs($this->local_path . $this->name . '/views/js/sendinblue.js');
             // Load customer data for logged in user so that we can register his/her with sendinblue
             $customer_data = $this->getCustomersByEmail($this->email);
 
