@@ -24,7 +24,7 @@
  * International Registered Trademark & Property of PrestaShop SA
  */
 
-class Mailin
+class Psmailin
 {
     public $api_key;
     public $base_url;

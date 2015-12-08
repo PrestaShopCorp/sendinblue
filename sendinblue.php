@@ -33,14 +33,18 @@ if (!class_exists('Customer')) {
 }
 
 if (version_compare(_PS_VERSION_, '1.4.5', '<')) {
-    require(_PS_CLASS_DIR_. '/../modules/sendinblue/Mailin.php');
+	if (!class_exists('Psmailin')) {
+        include_once(_PS_CLASS_DIR_. '/../modules/sendinblue/Psmailin.php');
+    }
     include_once (_PS_CLASS_DIR_. '/../modules/sendinblue/sendinblueResources.php');
     $sendinblue_resources = new SendinblueResources();
     if ($sendinblue_resources->checkConditionOlderVersion()) {
         include (_PS_CLASS_DIR_. '/../modules/sendinblue/config.php');
     }
 } else {
-    require(dirname(__FILE__) . '/Mailin.php');
+	if (!class_exists('Psmailin')) {
+        include_once(dirname(__FILE__) . '/Psmailin.php');
+    }
     include (dirname(__FILE__) . '/config.php');
 }
 
@@ -77,7 +81,7 @@ class Sendinblue extends Module
             $this->tab = 'advertising_marketing';
         }
         $this->author = 'SendinBlue';
-        $this->version = '2.5.3';
+        $this->version = '2.5.4';
         
         parent::__construct();
         
@@ -3618,7 +3622,7 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
                 $data['to'] = $number;
 
                 $api_key = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
-                $mailin = new Mailin("https://api.sendinblue.com/v2.0", $api_key);
+                $mailin = new Psmailin("https://api.sendinblue.com/v2.0", $api_key);
                 $data_api = array( "email" => $this->context->customer->email);
                 $data_resp = $mailin->getUser($data_api);
                 $order_status = '';
