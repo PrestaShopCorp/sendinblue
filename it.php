@@ -24,6 +24,7 @@
 * International Registered Trademark & Property of PrestaShop SA
 */
 
+
 global $_MODULE;
 $_MODULE = array();
 $_MODULE['<{sendinblue}prestashop>sendinblue_d76cde0c0d0b06e776e5dad8642d49c4'] = 'SendinBlue';
@@ -44,6 +45,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_a5da3ccf6b1c7ba6a55dda6bc0d20767'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_7c45879beee43e8b1ce73aa6d0e484d4'] = 'Inserisci il tuo messaggio';
 $_MODULE['<{sendinblue}prestashop>sendinblue_70179f72c2ee7aadca0b6f29cfe93ba7'] = 'L\'SMS è stato inviato';
 $_MODULE['<{sendinblue}prestashop>sendinblue_7b07d4b6a99b44013a48d1ad5a73c4c3'] = 'L\'SMS non è stato inviato';
+$_MODULE['<{sendinblue}prestashop>sendinblue_0380dbc1505146ad4f393d5ab1c7b27b'] = 'La data programmata non può essere anteriore alla data corrente.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_1d2a24069e090fabc79520875ffe0440'] = 'I vecchi iscritti non sono stati importati correttamente. La preghiamo di cliccare su \"Importa vecchi iscritti\" per importarli di nuovo.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_112a2dd564239a5c764070edad2235dc'] = 'Aggiornamento effettuato correttamente';
 $_MODULE['<{sendinblue}prestashop>sendinblue_52ac278c82fd84881c564c27b95e511a'] = '[SendinBlue SMTP] e-mail di test';
@@ -61,13 +63,21 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_bafd7322c6e97d25b6299b5d6fe8920b'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_2ae3bc148eaba9146651be8d419bca04'] = 'Questa funzionalità ti permette di vedere lo storico degli ordini eseguiti dal tuo sito PrestaShop verso SendinBlue con lo scopo di preparare delle strategie di marketing durante l\'invio delle tue campagne.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_825fa9f6318d050368cad4fe6c231eaa'] = 'Lo storico degli ordini è stato importato correttamente.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_58f760d415236185699e6ca317c1abc4'] = 'Importa i dati dei vecchi ordini';
-$_MODULE['<{sendinblue}prestashop>sendinblue_a9688747b1ce4017d5da98785cea2a0c'] = 'Attiva SendinBlue per gestire i tuoi contatti';
-$_MODULE['<{sendinblue}prestashop>sendinblue_6be4b14275fbb412209febb0fba11ab7'] = 'Attivando questa funzionalità, i tuoi nuovi contatti saranno automaticamente aggiunti / disiscritti da SendinBlue. Per una sincronizzazione inversa (SendinBlue verso Prestashop), devi eseguire ogni giorno l\'url dal CRON (vedi la nota sotto)';
-$_MODULE['<{sendinblue}prestashop>sendinblue_d364a1e6cec95805842edc1e6e9beba2'] = 'Gestisci le disiscrizioni dal Front-Office';
-$_MODULE['<{sendinblue}prestashop>sendinblue_e6ce664dfa17c70938467beb02aa6310'] = 'Attivando questa opzione, dai la possibilità ai tuoi contatti di disiscriversi dalla tua newsletter direttamente dal riquadro newsletter mostrato in home page. ';
-$_MODULE['<{sendinblue}prestashop>sendinblue_80e93bacdc28ff339467b75c850d1510'] = 'Inviare un\'e-mail di conferma quando un utente si iscrive';
 $_MODULE['<{sendinblue}prestashop>sendinblue_31bb2f6e9b8fb11cbb7fb63c6025223f'] = 'Seleziona un modulo';
 $_MODULE['<{sendinblue}prestashop>sendinblue_e57c2d0ee1cd319e1fbf4efff0f2b77a'] = 'Seleziona un modulo SendinBlue che sarà inviato ad ogni contatto che si iscrive alla tua newsletter';
+$_MODULE['<{sendinblue}prestashop>sendinblue_a9688747b1ce4017d5da98785cea2a0c'] = 'Attiva SendinBlue per gestire i tuoi contatti';
+$_MODULE['<{sendinblue}prestashop>sendinblue_6be4b14275fbb412209febb0fba11ab7'] = 'Attivando questa funzionalità, i tuoi nuovi contatti saranno automaticamente aggiunti / disiscritti da SendinBlue. Per una sincronizzazione inversa (SendinBlue verso Prestashop), devi eseguire ogni giorno l\'url dal CRON (vedi la nota sotto)';
+$_MODULE['<{sendinblue}prestashop>sendinblue_4a1ca4af1ec428d0aee168f5b73eebda'] = 'Nessun conferma';
+$_MODULE['<{sendinblue}prestashop>sendinblue_137660b92b41a3e9b0fb5df10a693e8b'] = 'Con questa opzione, il tuo contatto s\'iscrive direttamente nella tua lista lasciando il suo indirizzo email. Non riceve nessuna email di conferma.';
+$_MODULE['<{sendinblue}prestashop>sendinblue_4ec1657ee7a08de4a59607966b2edb9b'] = 'Conferma semplice';
+$_MODULE['<{sendinblue}prestashop>sendinblue_160f6aa6e1de693701cb8a9bbe4f5b07'] = 'Scegliendo questa opzione, il tuo contatto s\'iscriverà direttamente alla lista lasciando il suo indirizzo email nel modulo. Gli verrà inviata automaticamente un\'email di conferma a seguito della sua iscrizione.';
+$_MODULE['<{sendinblue}prestashop>sendinblue_1c5986e9ad60ea5617160e2c594424e8'] = 'Conferma double optin';
+$_MODULE['<{sendinblue}prestashop>sendinblue_ab11f9db98c190d82753021f08041c22'] = 'Se scegli la conferma Doppio opt-in, l\'abbonato riceverà un email che lo invita a confermare l\'iscrizione. Prima della conferma, il contatto è salvato nella scheda \'FORM\', lista \'Temp - DOUBLE OPTIN\', dopo la conferma, il contatto è salvato nella \'Lista corrispondente\' scelta qui in basso.';
+$_MODULE['<{sendinblue}prestashop>sendinblue_57a10f12630d95641ec6dfc7bed9e97c'] = 'Non appena il modulo sarà compilato, il tuo contatto riceverà un\'email con un link di conferma dell\'iscrizione.';
+$_MODULE['<{sendinblue}prestashop>sendinblue_ff34177dd7962e6ea1333608e15aa7cc'] = 'URL di reindirizzamento dopo clic sull\'email di convalida';
+$_MODULE['<{sendinblue}prestashop>sendinblue_bd0e0e73963656085f28e413ea9eabd5'] = 'Reindirizza il tuo contatto verso una landing page o il tuo sito dopo che ha convalidato il link di conferma nell\'email.';
+$_MODULE['<{sendinblue}prestashop>sendinblue_70f2b59d436d6acb605f1c0031953af2'] = 'Invia un\'email di conferma finale';
+$_MODULE['<{sendinblue}prestashop>sendinblue_d527884301d3208463b2b5f6f164aabe'] = 'Dopo che un contatto ha cliccato sul link dell\'email di conferma di doppio opt-in, inviagli un\'email finale di conferma';
 $_MODULE['<{sendinblue}prestashop>sendinblue_06933067aafd48425d67bcb01bba5cb6'] = 'Aggiorna';
 $_MODULE['<{sendinblue}prestashop>sendinblue_11af2f30bc4f0c405c00d14a359fa061'] = 'Importa vecchi iscritti';
 $_MODULE['<{sendinblue}prestashop>sendinblue_4a85edadc7601bdb29c2c8593a59ca03'] = 'Per sincronizzare le email dei tuoi clienti della piattaforma SendinBlue verso il tuo sito di E-commerce, bisogna eseguire';
@@ -83,7 +93,6 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_dd28538b67e7c720f37d3260c10d2747'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_5621ebf12c5f61b885a23ed959688e44'] = 'SendinBlue : Il plugin tutto-in-uno per le tue email di marketing e transazionali.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_3db63d5a4b855aec504d07307463133b'] = 'Stai usando una versione precedente del nostro plugin, disinstallala / eliminala e installa l\'ultima versione dal sito di SendinBlue';
 $_MODULE['<{sendinblue}prestashop>sendinblue_eb7a298d7741cef1a61147ab07237235'] = 'Contatta il team di SendinBlue';
-$_MODULE['<{sendinblue}prestashop>sendinblue_e876af202306229a04cc9cf14aba0ff0'] = 'Contattaci';
 $_MODULE['<{sendinblue}prestashop>sendinblue_44a87f7752c32d2d4dba5b25cb2a966f'] = 'Email : ';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ddf7d91d563667f08f1d467bc4a0d55a'] = 'contact@sendinblue.com';
 $_MODULE['<{sendinblue}prestashop>sendinblue_21812af50835ec5a8df4087771efabc1'] = 'Tel: 0899 25 30 61';
@@ -106,12 +115,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_f4f70727dc34561dfde1a3c529b6205c'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_495a3b3985cc02dbf7b4111b4e913d8a'] = 'Attiva il modulo SendinBlue';
 $_MODULE['<{sendinblue}prestashop>sendinblue_656a6828d7ef1bb791e42087c4b5ee6e'] = 'Chiave API';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ab07708173b94fb02480c589572ded63'] = 'Inserisci la tua chiave API collegata al tuo account SendinBlue. E\' disponibile a questa pagina: https://my.sendinblue.com/advanced/apikey. Se non possiedi un account SendinBlue, devi crearne uno sul sito https://www.sendinblue.com';
-$_MODULE['<{sendinblue}prestashop>sendinblue_6e659c47c94d1e1dc7121859f43fb2b0'] = 'Email non valida';
-$_MODULE['<{sendinblue}prestashop>sendinblue_b538427eef71d92ea64669eaa7957240'] = 'L\'email inserita non esiste nel database';
-$_MODULE['<{sendinblue}prestashop>sendinblue_3b2c452f8894cf644d24cca8d1bb7a6e'] = 'La tua email è già disiscritta dalla nostra newsletter';
-$_MODULE['<{sendinblue}prestashop>sendinblue_b7d9eb38dd2e375648ab08e224e22e43'] = 'Si è verificato un errore durante l\'iscrizione';
 $_MODULE['<{sendinblue}prestashop>sendinblue_f7dc297e2a139ab4f5a771825b46df43'] = 'Sei stato disiscritto correttamente';
-$_MODULE['<{sendinblue}prestashop>sendinblue_2d4b357a4f628483d680c48a5ad4f924'] = 'La tua email è già iscritta alla nostra newsletter';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ed3cd7b3cc134222fa70602921ec27e1'] = 'Sei stato iscritto correttamente';
 $_MODULE['<{sendinblue}prestashop>sendinblue_77a32ea63cbd2ec3475ce4db5789bb0e'] = 'Seleziona';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ef7de3f485174ff47f061ad27d83d0ee'] = 'lista(e) selezionata(e)';
@@ -125,8 +129,8 @@ $_MODULE['<{sendinblue}prestashop>ajaxuserlist_d55b30607c2a9a2616347d6edb789f6b'
 $_MODULE['<{sendinblue}prestashop>smssetting_24cb398136bc32e39be4044b0ff91466'] = 'Gestione degli SMS';
 $_MODULE['<{sendinblue}prestashop>smssetting_0edc8732de384f42f037beb08312e312'] = 'Attualmente, hai';
 $_MODULE['<{sendinblue}prestashop>smssetting_1d850b95b3a1504ed22da3ea7a45df18'] = 'crediti SMS. Per acquistare più crediti, clicca ';
-$_MODULE['<{sendinblue}prestashop>smssetting_81a3fe67c76884a67892eba83636e880'] = 'https://www.sendinblue.com/pricing';
 $_MODULE['<{sendinblue}prestashop>smssetting_6a358da8dd621a4ca321e7ddf06b896e'] = 'qui';
+$_MODULE['<{sendinblue}prestashop>smssetting_81a3fe67c76884a67892eba83636e880'] = 'https://www.sendinblue.com/pricing';
 $_MODULE['<{sendinblue}prestashop>smssetting_2c4fc754fd62b802255318f0308d844a'] = 'Vuoi essere informato via email quando ti rimangono pochi crediti?';
 $_MODULE['<{sendinblue}prestashop>smssetting_93cba07454f06a4a960172bbd6e2a435'] = 'Sì';
 $_MODULE['<{sendinblue}prestashop>smssetting_bafd7322c6e97d25b6299b5d6fe8920b'] = 'No';
@@ -182,9 +186,3 @@ $_MODULE['<{sendinblue}prestashop>userlist_ab6dcd343beb10de901ace28d69254cf'] = 
 $_MODULE['<{sendinblue}prestashop>userlist_1c541dbb99703cf37f9376ab44edf15f'] = 'Iscritto su PrestaShop';
 $_MODULE['<{sendinblue}prestashop>userlist_92589a139ba869c5a7a492068d7cf148'] = 'Stato SMS su Sendinblue';
 $_MODULE['<{sendinblue}prestashop>userlist_ff94829175388e0646b8e22335011064'] = 'Clicca sull\'icona per iscrivere / disiscrivere un SMS di SendinBlue. ';
-$_MODULE['<{sendinblue}prestashop>newsletter_ffb7e666a70151215b4c55c6268d7d72'] = 'Newsletter';
-$_MODULE['<{sendinblue}prestashop>newsletter_9b3911a6705bcd3a70c80e00fe1bde68'] = 'Iscriviti alla nostra newsletter';
-$_MODULE['<{sendinblue}prestashop>sendinblue_ffb7e666a70151215b4c55c6268d7d72'] = 'Newsletter';
-$_MODULE['<{sendinblue}prestashop>sendinblue_416f61a2ce16586f8289d41117a2554e'] = 'Tua e-mail';
-$_MODULE['<{sendinblue}prestashop>sendinblue_b26917587d98330d93f87808fc9d7267'] = 'Iscriversi';
-$_MODULE['<{sendinblue}prestashop>sendinblue_4182c8f19d40c7ca236a5f4f83faeb6b'] = 'Disiscriversi';

@@ -46,13 +46,59 @@ $(document).ready(
 
                     }
                 });
-                //	append hidden field in edit personal information page
-                window.onload=function(){
-					var newsletter_hidden_val = $('#newsletter').val();
-					$("#newsletter").append('<input type="hidden" id="sendinflag" value="'+ newsletter_hidden_val +'" name="sendinflag">');
-				};
-                
 
+                $(document).ready(function(e) {    
+                  $('.manage_subscribe_block input[name=subscribe_confirm_type]').click(function(){
+                     $('.manage_subscribe_block .inner_manage_box').slideUp(); 
+                     $(this).parents('.manage_subscribe_block').find('.inner_manage_box').slideDown();
+                      
+                  });
+
+                  $('.openCollapse').click(function() {
+                     
+                     if ($(this).is(":checked")){
+                          $(this).parent('.form-group').find('.collapse').slideDown();
+                     } else {
+                          $(this).parent('.form-group').find('.collapse').slideUp();
+                     }
+                  });
+                });
+
+                //doubleoptin alert functionality
+
+                $('#template_doubleoptin').bind('change', function(){
+                    var abcs = $(this).find('option:selected').text().toLowerCase().indexOf('double optin');
+                    if (abcs === -1) {
+                        alert('You must select a template with the tag [DOUBLEOPTIN]');
+                        var selectedObj = $('#template_doubleoptin option').filter(function(){
+                            return $(this).text().toLowerCase().indexOf('double optin') !== -1
+                        });
+                        selectedObj.attr('selected', true)
+                        $(this).val(selectedObj.val());
+                    }
+                });
+                //  append hidden field in edit personal information page
+                window.onload=function(){
+                    var newsletter_hidden_val = $('#newsletter').val();
+                    $("#newsletter").append('<input type="hidden" id="sendinflag" value="'+ newsletter_hidden_val +'" name="sendinflag">');
+                };
+
+                $('#sender_order').keyup(function (e) {
+                        var str = $(this).val();
+                        str = str.replace(/[^a-zA-Z 0-9]+/g, '');                        
+                        $('#sender_order').val(str);
+                });
+                $('#sender_shipment').keyup(function (e) {
+                        var str = $(this).val();
+                        str = str.replace(/[^a-zA-Z 0-9]+/g, '');                        
+                        $('#sender_shipment').val(str);
+                });
+                $('#sender_campaign').keyup(function (e) {
+                        var str = $(this).val();
+                        str = str.replace(/[^a-zA-Z 0-9]+/g, '');                        
+                        $('#sender_campaign').val(str);
+                });
+                
                 if ($('#sender_order').val() != '')
                 {
 
@@ -319,15 +365,8 @@ $(document).ready(
                     }
                 });
 
-
-                if ($('input:radio[name=Sendin_Sms_Choice]:checked').val() == 2)
-                {
-                    jQuery(".multiplechoice").show();
-                    jQuery(".singlechoice").hide();
-                } else {
-                    jQuery(".singlechoice").show();
-                    jQuery(".multiplechoice").hide();
-                }
+            //date picker function
+            $('#sib_datetimepicker').datepicker({ dateFormat: 'yy-mm-dd' });
 
                 $(".sms_shiping_setting").click(function() {
                     if (jQuery(this).val() == 1) {
@@ -337,15 +376,23 @@ $(document).ready(
                         jQuery(".hideShiping").hide();
                     }
                 });
-                if ($('input:radio[name=Sendin_Sms_Choice]:checked').val() == 0)
-                {
+                jQuery('input:radio[name=Sendin_Sms_Choice]').click(function(){
+                var getVal = jQuery(this).val();
+                if(getVal == 0) {
                     jQuery(".multiplechoice").show();
                     jQuery(".singlechoice").hide();
+                    jQuery(".sib_datepicker").hide();
+                    
+                }else if(getVal == 2){
+                    jQuery(".multiplechoice").show();
+                    jQuery(".singlechoice").hide();
+                    jQuery(".sib_datepicker").show();
                 } else {
                     jQuery(".singlechoice").show();
                     jQuery(".multiplechoice").hide();
+                    jQuery(".sib_datepicker").hide();
                 }
-
+                });
                 $(".sms_shiping_setting").click(function() {
                     if (jQuery(this).val() == 1) {
 
@@ -531,6 +578,7 @@ $(document).ready(
             $(".managesubscribe").click(function() {
                 var managesubscribe = jQuery(this).val();
                 var token = jQuery("#customtoken").val();
+                var defaultnlmsg = jQuery("#defaultnlmsg").val();
 
                 if (managesubscribe == 0) {
                     $('.managesubscribeBlock').hide();
@@ -547,6 +595,10 @@ $(document).ready(
                         $('#ajax-busy').show();
                     },
                     success: function(msg) {
+                        if (msg == 'error')
+                        {
+                            alert(defaultnlmsg);
+                        }
                         $('#ajax-busy').hide();
                     }
                 });

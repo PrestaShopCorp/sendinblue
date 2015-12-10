@@ -37,7 +37,8 @@ if (empty($res_value['errMsg'])) {
     foreach ($res_value['result'] as $value) {
         $result = Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'customer`
 			SET newsletter="' . pSQL($value['s']) . '",
-			newsletter_date_add = "' . pSQL($value['m']) . '"
+			newsletter_date_add = "' . pSQL($value['m']) . '",
+			date_upd = "' . pSQL(date('Y-m-d H:i:s')) . '"
 			WHERE email = "' . pSQL($value['e']) . '" ');
         $result = Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'sendin_newsletter`
 			SET active="' . pSQL($value['s']) . '",
