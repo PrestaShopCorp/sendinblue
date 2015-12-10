@@ -47,9 +47,6 @@ if (empty($res_value['errMsg'])) {
     }
     
     $handle = fopen(_PS_MODULE_DIR_ . 'sendinblue/csv/SyncToSendinblue.csv', 'w');
-    $key_value = array();
-    $key_value[] = '';
-    fputcsv($handle, $key_value, '');
     fclose($handle);
 }
 
