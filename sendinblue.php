@@ -147,6 +147,12 @@ class Sendinblue extends Module
         }
         
         $this->checkForUpdates();
+        if (Configuration::get('Sendin_Web_Hook_Status') != 1) {
+            $web_resp = $this->createPsWebHook();
+            if ($web_resp['code'] == 'success') {
+                Configuration::updateValue('Sendin_Web_Hook_Status', 1);
+            }
+        }
     }
     
     /**
@@ -545,15 +551,15 @@ SELECT email, newsletter_date_add, ip_registration_newsletter, http_referer FROM
         }
         
         return Db::getInstance()->ExecuteS('
-SELECT LOWER(C.email) as email, C.newsletter AS newsletter, ' . _DB_PREFIX_ . 'country.call_prefix, PSA.phone_mobile, C.id_customer, PSA.date_upd
-FROM ' . _DB_PREFIX_ . 'customer as C LEFT JOIN ' . _DB_PREFIX_ . 'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
-(SELECT id_customer, MAX(date_upd) upd  FROM ' . _DB_PREFIX_ . 'address GROUP BY ' . _DB_PREFIX_ . 'address.id_customer))
-LEFT JOIN ' . _DB_PREFIX_ . 'country ON ' . _DB_PREFIX_ . 'country.id_country = PSA.id_country ' . $condition . '
-GROUP BY C.id_customer
-UNION
-(SELECT LOWER(A.email) as email, A.active AS newsletter, NULL AS call_prefix,
-NULL AS phone_mobile, "Nclient" AS id_customer, NULL AS date_upd
-FROM ' . _DB_PREFIX_ . 'sendin_newsletter AS A ' . $condition2 . ')  LIMIT ' . (int)$start . ',' . (int)$page);
+        SELECT LOWER(C.email) as email, C.newsletter AS newsletter, ' . _DB_PREFIX_ . 'country.call_prefix, PSA.phone_mobile, C.id_customer, PSA.date_upd
+        FROM ' . _DB_PREFIX_ . 'customer as C LEFT JOIN ' . _DB_PREFIX_ . 'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
+        (SELECT id_customer, MAX(date_upd) upd  FROM ' . _DB_PREFIX_ . 'address GROUP BY ' . _DB_PREFIX_ . 'address.id_customer))
+        LEFT JOIN ' . _DB_PREFIX_ . 'country ON ' . _DB_PREFIX_ . 'country.id_country = PSA.id_country ' . $condition . '
+        GROUP BY C.id_customer
+        UNION
+        (SELECT LOWER(A.email) as email, A.active AS newsletter, NULL AS call_prefix,
+        NULL AS phone_mobile, "Nclient" AS id_customer, NULL AS date_upd
+        FROM ' . _DB_PREFIX_ . 'sendin_newsletter AS A ' . $condition2 . ')  LIMIT ' . (int)$start . ',' . (int)$page);
     }
     
     /**
@@ -2007,7 +2013,10 @@ WHERE email = "' . pSQL($this->email) . '"');
                         Configuration::updateValue('NW_CONFIRMATION_EMAIL', 0);
                         Configuration::updateValue('NW_VERIFICATION_EMAIL', 0);
                     }
-                    
+                    $web_resp = $this->createPsWebHook();
+                    if ($web_resp['code'] == 'success') {
+                        Configuration::updateValue('Sendin_Web_Hook_Status', 1);
+                    }
                     Configuration::updateValue('SENDINBLUE_CONFIGURATION_OK', true, '', $this->id_shop_group, $this->id_shop);
                     $this->redirectPage($this->l('Successfully updated'), 'SUCCESS');
                 }
@@ -2655,8 +2664,7 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($id_shop_group === null) {
                 $id_shop_group = 1;
             }
-            $all_group_reg = array();
-            $all_group_unsubs = array();
+
             $all_group_reg = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             
             $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
@@ -2673,15 +2681,14 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($id_shop === null) {
                 $id_shop = 1;
             }
-            $all_group_reg = array();
-            $all_group_unsubs = array();
-            $all_group_reg = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+
+            $all_group_reg_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             
-            $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+            $all_group_unsubs_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             $data_first_store = array();
             $data_second_store = array();
-            $data_first_store = explode(',', $all_group_reg['storeid']);
-            $data_second_store = explode(',', $all_group_unsubs['storeid']);
+            $data_first_store = explode(',', $all_group_reg_store['storeid']);
+            $data_second_store = explode(',', $all_group_unsubs_store['storeid']);
             $value_merge_store = array_merge($data_first_store, $data_second_store);
             $value_store = implode(',', array_filter($value_merge_store));
             $attribute_data[] = $value_store;
@@ -2809,9 +2816,7 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($id_shop_group === null) {
                 $id_shop_group = 1;
             }
-            
-            $all_group_reg = array();
-            $all_group_unsubs = array();
+
             $all_group_reg = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             
@@ -2834,20 +2839,18 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($id_shop === null) {
                 $id_shop = 1;
             }
-            
-            $all_group_reg = array();
-            $all_group_unsubs = array();
-            $all_group_reg = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
-            $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+
+            $all_group_reg_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+            $all_group_unsubs_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             
             $data_first = array();
             $data_second = array();
-            if (!empty($all_group_reg['storeid'])) {
-                $data_first = explode(',', $all_group_reg['storeid']);
+            if (!empty($all_group_reg_store['storeid'])) {
+                $data_first = explode(',', $all_group_reg_store['storeid']);
             }
             
-            if (!empty($all_group_unsubs['storeid'])) {
-                $data_second = explode(',', $all_group_unsubs['storeid']);
+            if (!empty($all_group_unsubs_store['storeid'])) {
+                $data_second = explode(',', $all_group_unsubs_store['storeid']);
             }
             
             $value_merge_store = array_merge($data_first, $data_second);
@@ -2957,9 +2960,6 @@ WHERE email = "' . pSQL($this->email) . '"');
      */
     public function syncronizeBlockCode()
     {
-        $chkval = Configuration::get('Sendin_final_confirm_email', '', $this->id_shop_group, $this->id_shop);
-        $chkval_url = Configuration::get('Sendin_Optin_Url_Check', '', $this->id_shop_group, $this->id_shop);
-        $radio_val_option = Configuration::get('Sendin_Confirm_Type', '', $this->id_shop_group, $this->id_shop);
         $temp_data = '';
         $temp_data.= '<div class="listData ' . $this->cl_version . ' managesubscribeBlock" style="text-align:left;"><select name="template" class="ui-state-default" style="width: 225px; height:22px; border-radius:4px; margin:10px 0;"><option value="">' . $this->l('Select Template') . '</option>
         ';
@@ -3010,138 +3010,24 @@ WHERE email = "' . pSQL($this->email) . '"');
             $smtp_alert = '<div class="alert '. $this->cl_version .'"> ' . $this->l('You need an active SMTP (transactional) account to be able to send confirmation emails. Please').' <a href="mailto:contact@sendinblue.com">' . $this->l('contact customer service').'</a> ' . $this->l('to activate it.').'</div>';
         }
 
-        $this->_second_block_code = '<style type="text/css">.tableblock tr td{padding:5px; border-bottom:0px;}</style>
-        <form method="post" action="' . Tools::safeOutput($_SERVER['REQUEST_URI']) . '">
-        <table class="table tableblock hidetableblock form-data" style="margin-top:15px;" cellspacing="0" cellpadding="0" width="100%">
-        <thead>
-        <tr>
-        <th colspan="2">' . $this->l('Activate SendinBlue to manage subscribers') . '</th>
-        </tr>
-        </thead>
-        <tr>
-        <td style="width:250px">
-        <label> ' . $this->l('Activate SendinBlue to manage subscribers') . '
-        </label>
-        </td>
-        <td class="' . $this->cl_version . '"><input type="radio" class="managesubscribe" id="yessmtp"
-        style="margin-right:10px;" name="managesubscribe" value="1"
-        ' . (Configuration::get('Sendin_Subscribe_Setting', '', $this->id_shop_group, $this->id_shop) ? 'checked="checked" ' : '') . '/>' . $this->l('Yes') . '
-        <input type="radio" class="managesubscribe"
-        id="nosmtp" style="margin-left:20px;margin-right:10px;"
-        name="managesubscribe" value="0" ' . (!Configuration::get('Sendin_Subscribe_Setting', '', $this->id_shop_group, $this->id_shop) ? 'checked="checked" ' : '') . '/>' . $this->l('No') . '
-        <span class="toolTip"
-        title="' . $this->l('If you activate this feature, your new contacts will be automatically added to SendinBlue or unsubscribed from SendinBlue. To synchronize the other way (SendinBlue to PrestaShop), you should run the url (mentioned below) each day.') . '">
-        &nbsp;</span>
-        </td>
-        </tr>';
-        $this->_second_block_code.= '<tr class="managesubscribeBlock">' . $this->parselist() . '</tr>';
-        $this->_second_block_code.= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
-        <td>
-        </td>
-        </tr><tr class="managesubscribeBlock"><td><td/>
-        <div class="col-md-6 left-wrapper radio_group_option">
-  <div class="form-group manage_subscribe_block">
-    <div>
-      <input type="radio" id="no_follow_email" name="subscribe_confirm_type" value="nocon" ' . ($radio_val_option == 'nocon' ? 'checked="checked" ' : '') . '>
-      <label class="radio-label" for="no_follow_email"> ' . $this->l('No confirmation') . '</label>
-    </div>
-    <div class="clearfix"></div>
-    <div class="inner_manage_box" style="display:block;">
-      <div id="no-templates" class="'.$this->cl_version.'" > ' . $this->l('With this option, contacts are directly added to your list when they enter their email address. No confirmation email is sent.') . '</div>
-    </div>
-  </div>
-  <div class="form-group manage_subscribe_block">
-    <div class="col-md-10">
-      <input type="radio" name="subscribe_confirm_type" id="follow_mail" value="simplemail" ' . ($radio_val_option == 'simplemail' ? 'checked="checked" ' : '') . '>
-      <label class="radio-label" for="follow_mail"> ' . $this->l('Simple confirmation') . '</label><span class="toolTip"
-        title="' . $this->l('This confirmation email is one of your SMTP templates. By default, we have created a Default Template - Single Confirmation.') . '"></span>
-    </div>
-    <div class="inner_manage_box" ' . ($radio_val_option == 'simplemail' ? 'style="display:block;"' : '') . '> 
-      <div class="clearfix"></div>
-      <div id="create-templates" class="'.$this->cl_version.'"> ' . $this->l('By selecting this option, contacts are directly added to your list when they enter their email address on the form. A confirmation email will automatically be sent following their subscription.') .'</div>
-      <div class="clearfix"></div>
-      <div id="mail-templates">'.$temp_data.'</div>
-      <div class="clearfix"></div>
-      <div id="mail-templates-active-state">
-        '. $smtp_alert .'
-      </div>
-    </div>
-    <div class="clearfix"></div>
-  </div>
-  <div class="clearfix"></div>
-  <div class="form-group manage_subscribe_block">
-    <div class="col-md-10" style="padding: 0px;">
-      <input type="radio" name="subscribe_confirm_type" id="double_optin" value="doubleoptin" ' . ($radio_val_option == 'doubleoptin' ? 'checked="checked" ' : '') . '>
-      <label class="radio-label" for="double_optin"> ' . $this->l('Double opt-in confirmation') . '</label><span class="toolTip"
-        title="' . $this->l('If you select the Double Opt-in confirmation, subscribers will receive an email inviting them to confirm their subscription. Before confirmation, the contact will be saved in the \'FORM\' folder, on the \'Temp - DOUBLE OPT-IN\' list. After confirmation, the contact will be saved in the \'Corresponding List\' selected below.') . '"
-        &nbsp;</span>
-    </div>
-    <div class="clearfix"></div>
-    <div class="inner_manage_box" ' . ($radio_val_option == 'doubleoptin' ? 'style="display:block;"' : '') . '> 
-      <div class="clearfix"></div>
-      <!-- Please select a template with the [DOUBLEOPTIN] link -->
-      <div id="create-doubleoptin-templates">
-        <p style="width: 90%;text-align: justify;text-justify: inter-word;">' . $this->l('Once the form has been completed, your contact will receive an email with a link to confirm their subscription.').'</p></div>
-      <!-- Redirect URL after click on the validation email -->
-      <div class="clearfix"></div>
-      <div class="form-group clearfix" id="doubleoptin-redirect-url-area" style="padding-top: 10px;"> 
-      <div style="float:left;">
-        <input type="checkbox" id="doptin_redirect_span_icon" name="optin_redirect_url_check" value="yes" ' . ($chkval_url == 'yes' ? 'checked="checked" ' : '') . ' class="openCollapse">
-        <a href="#mail-doubleoptin-redirect" aria-controls="mail-doubleoptin-redirect" style="color: #555;font-weight: bold;"> ' . $this->l('Redirect URL after clicking in the validation email').' </a> 
-        <!-- <label style="margin-bottom: 5px;"></label> -->
-        </div>
-        <div class="clearfix"></div>
-        <div class="collapse" id="mail-doubleoptin-redirect">
-          <p style="width: 90%;text-align: justify;text-justify: inter-word;">       
-          ' . $this->l('Redirect your contacts to a landing page or to your website once they have clicked on the confirmation link in the email.') . '</p>
-          <input type="url" id="doubleoptin-redirect-url" name="doubleoptin-redirect-url" class="form-control" placeholder="http://your-domain.com" value = "'.Configuration::get('Sendin_doubleoptin_redirect', '', $this->id_shop_group, $this->id_shop).'" style="margin-bottom:10px;width:370px">
-          <div class="clearfix"></div>
-          <div id="doubleoptin-redirect-message" class="pull-left" > </div>
-          <div class="clearfix"></div>
-        </div>
-      </div>
-      <!-- Send a final confirmation email -->
-      <div class="clearfix"></div>
-      <div class="form-group clearfix" id="doubleoptin-final-confirmation-area" > 
-      <div style="float:left;">
-        <input type="checkbox" id="doptin_final_confirm_email" name="final_confirm_email" value="yes" ' . ($chkval == 'yes' ? 'checked="checked" ' : '') . '  class="openCollapse">
-        <a href="#doubleoptin-final-confirm" data-toggle="collapse" aria-expanded="false" aria-controls="doubleoptin-final-confirm" style="color: #555;font-weight: bold;"> ' . $this->l('Send a final confirmation email') .' </a>
-        </div>
-        <div class="clearfix"></div>
-        <div class="collapse" id="doubleoptin-final-confirm" style="padding-left: 10px;">
-          <p >' . $this->l('Once a contact has clicked in the double opt-in confirmation email, send them a final confirmation email').'</p>
-          '.$temp_confirm.'
-          <div class="clearfix"></div>
-          <div id="final-mail-templates" class="pull-left"></div>
-         <div class="clearfix"></div> 
-        </div>
-          <div id="doubleoptin-templates-active-state" style="padding-left: 20px;">
-        '. $smtp_alert .'
-    </div>
-    </div>
-
-    </div>
-    </div>
-    <div class="clearfix"></div>
-    </div>
-        <td></td></tr>';
-        $this->_second_block_code.= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
-        <td>
-        <input type="submit" name="submitForm2" value="' . $this->l('Update') . '" class="button" />&nbsp;
-        </td>
-        </tr><tr class="managesubscribeBlock"><td>&nbsp;</td><td colspan="2">';
-        $data = '';
-        if (Configuration::get('Sendin_import_user_status', '', $this->id_shop_group, $this->id_shop) == 1) {
-            $data.= '<input type="submit" name="submitUpdateImport" value="' . $this->l('Import Old Subscribers') . '" class="button" />&nbsp;</form>';
-        }
-        $this->_second_block_code.= $data . '</td>
-        </tr><tr class="managesubscribeBlock" ><td colspan="3" class="' . $this->cl_version . '">' . $this->l('To synchronize the emails of your customers from SendinBlue platform to your e-commerce website, you should run') . '
-        <a target="_blank" href="' . $this->local_path . 'sendinblue/cron.php?token=' . Tools::encrypt(Configuration::get('PS_SHOP_NAME')) . '">
-        ' . $this->l('this link') . '</a> ';
-        $this->_second_block_code.= $this->l('each day.') . '
-        <span class="toolTip" title="' . $this->l('Note that if you change the name of your Shop (currently ') . Configuration::get('PS_SHOP_NAME') . $this->l(') the token value changes.') . '">&nbsp;</span></td></tr></table>';
-        
-        return $this->_second_block_code;
+        $this->context->smarty->assign('site_name', Configuration::get('PS_SHOP_NAME'));
+        $this->context->smarty->assign('link', '<a target="_blank" href="' . $this->local_path . 'sendinblue/cron.php?token=' . Tools::encrypt(Configuration::get('PS_SHOP_NAME')) . '">
+        ' . $this->l('this link') . '</a> ');
+        $this->context->smarty->assign('parselist', $this->parselist());
+        $this->context->smarty->assign('chkval', Configuration::get('Sendin_final_confirm_email', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('chkval_url', Configuration::get('Sendin_Optin_Url_Check', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('radio_val_option', Configuration::get('Sendin_Confirm_Type', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('temp_data', $temp_data);
+        $this->context->smarty->assign('temp_confirm', $temp_confirm);
+        $this->context->smarty->assign('prs_version', _PS_VERSION_);
+        $this->context->smarty->assign('sendin_smtp', $sendin_smtp);
+        $this->context->smarty->assign('smtp_alert', $smtp_alert);
+        $this->context->smarty->assign('Sendin_doubleoptin_redirect', Configuration::get('Sendin_doubleoptin_redirect', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('Sendin_Subscribe_Setting', Configuration::get('Sendin_Subscribe_Setting', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('Sendin_import_user_status', Configuration::get('Sendin_import_user_status', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('form_url', Tools::safeOutput($_SERVER['REQUEST_URI']));
+        $this->context->smarty->assign('cl_version', $this->cl_version);
+        return $this->display(__FILE__, 'views/templates/admin/sendinsyncronizeblock.tpl');
     }
     
     /**
@@ -3599,6 +3485,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         Configuration::deleteByName('Sendin_Api_Smtp_Status');
         Configuration::deleteByName('Sendin_import_user_status');
         Configuration::deleteByName('Sendin_Selected_List_Data');
+        Configuration::deleteByName('Sendin_Web_Hook_Status');
         Configuration::deleteByName('SENDINBLUE_CONFIGURATION_OK');
         
         if (Configuration::get('Sendin_Newsletter_table', '', $this->id_shop_group, $this->id_shop)) {
@@ -4021,6 +3908,28 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
         $id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
         $condition = $this->conditionalValueSecond($id_shop_group, $id_shop);
         $sql = 'SELECT C.id_customer, C.firstname, C.lastname, C.email, C.id_gender, C.newsletter, C.newsletter_date_add FROM ' . _DB_PREFIX_ . 'customer as C ' . $condition;
+        return Db::getInstance()->ExecuteS($sql);
+    }
+    public function conditionalValueOrder($id_shop_group, $id_shop)
+    {
+        $id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
+        $id_shop = !empty($id_shop) ? $id_shop : 'NULL';
+        
+        if ($id_shop === 'NULL' && $id_shop_group === 'NULL') {
+            $condition = '';
+        } elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL') {
+            $condition = 'AND id_shop_group =' . $id_shop_group;
+        } else {
+            $condition = 'AND id_shop_group =' . $id_shop_group . ' AND id_shop =' . $id_shop;
+        }
+        return $condition;
+    }
+    public function getAllCustomersofOrder($id_shop_group, $id_shop)
+    {
+        $id_shop = !empty($id_shop) ? $id_shop : 'NULL';
+        $id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
+        $condition = $this->conditionalValueOrder($id_shop_group, $id_shop);
+        $sql = 'SELECT id_customer, firstname, lastname, email FROM ' . _DB_PREFIX_ . 'customer WHERE newsletter = 1 ' . $condition;
         return Db::getInstance()->ExecuteS($sql);
     }
     
@@ -4471,5 +4380,19 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
         }
 
         return $output;
+    }
+     /**
+    * create new web hookurl for unsubscribe responce.
+    */
+    public function createPsWebHook()
+    {
+        $web_hook = $this->local_path . 'sendinblue/sendinWebHook.php?token=' . Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+        $api_key = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
+        $mailin = new Psmailin("https://api.sendinblue.com/v2.0", $api_key);
+        $data_api = array( "url" => $web_hook,
+            "description" => "prestashopWebHook",
+            "events" => array( "unsubscribe", "spam", "hard_bounce"),
+            "is_plat" => 1);
+        return $mailin->createWebhook($data_api);
     }
 }

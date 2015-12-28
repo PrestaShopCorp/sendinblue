@@ -365,3 +365,4 @@ nobootstrap {
 .inner_manage_box{margin: 3px 0 0 20px;}
 .manage_subscribe_block label{padding-right:5px;}
 .clearfix{clear:both;width:100%;}
+.tableblock tr td{padding:5px; border-bottom:0px;}

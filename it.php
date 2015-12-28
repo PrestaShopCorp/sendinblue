@@ -23,8 +23,6 @@
 * @license   http://opensource.org/licenses/afl-3.0.php Academic Free License (AFL 3.0)
 * International Registered Trademark & Property of PrestaShop SA
 */
-
-
 global $_MODULE;
 $_MODULE = array();
 $_MODULE['<{sendinblue}prestashop>sendinblue_d76cde0c0d0b06e776e5dad8642d49c4'] = 'SendinBlue';
@@ -65,26 +63,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_825fa9f6318d050368cad4fe6c231eaa'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_58f760d415236185699e6ca317c1abc4'] = 'Importa i dati dei vecchi ordini';
 $_MODULE['<{sendinblue}prestashop>sendinblue_31bb2f6e9b8fb11cbb7fb63c6025223f'] = 'Seleziona un modulo';
 $_MODULE['<{sendinblue}prestashop>sendinblue_e57c2d0ee1cd319e1fbf4efff0f2b77a'] = 'Seleziona un modulo SendinBlue che sarà inviato ad ogni contatto che si iscrive alla tua newsletter';
-$_MODULE['<{sendinblue}prestashop>sendinblue_a9688747b1ce4017d5da98785cea2a0c'] = 'Attiva SendinBlue per gestire i tuoi contatti';
-$_MODULE['<{sendinblue}prestashop>sendinblue_6be4b14275fbb412209febb0fba11ab7'] = 'Attivando questa funzionalità, i tuoi nuovi contatti saranno automaticamente aggiunti / disiscritti da SendinBlue. Per una sincronizzazione inversa (SendinBlue verso Prestashop), devi eseguire ogni giorno l\'url dal CRON (vedi la nota sotto)';
-$_MODULE['<{sendinblue}prestashop>sendinblue_4a1ca4af1ec428d0aee168f5b73eebda'] = 'Nessun conferma';
-$_MODULE['<{sendinblue}prestashop>sendinblue_137660b92b41a3e9b0fb5df10a693e8b'] = 'Con questa opzione, il tuo contatto s\'iscrive direttamente nella tua lista lasciando il suo indirizzo email. Non riceve nessuna email di conferma.';
-$_MODULE['<{sendinblue}prestashop>sendinblue_4ec1657ee7a08de4a59607966b2edb9b'] = 'Conferma semplice';
-$_MODULE['<{sendinblue}prestashop>sendinblue_160f6aa6e1de693701cb8a9bbe4f5b07'] = 'Scegliendo questa opzione, il tuo contatto s\'iscriverà direttamente alla lista lasciando il suo indirizzo email nel modulo. Gli verrà inviata automaticamente un\'email di conferma a seguito della sua iscrizione.';
-$_MODULE['<{sendinblue}prestashop>sendinblue_1c5986e9ad60ea5617160e2c594424e8'] = 'Conferma double optin';
-$_MODULE['<{sendinblue}prestashop>sendinblue_ab11f9db98c190d82753021f08041c22'] = 'Se scegli la conferma Doppio opt-in, l\'abbonato riceverà un email che lo invita a confermare l\'iscrizione. Prima della conferma, il contatto è salvato nella scheda \'FORM\', lista \'Temp - DOUBLE OPTIN\', dopo la conferma, il contatto è salvato nella \'Lista corrispondente\' scelta qui in basso.';
-$_MODULE['<{sendinblue}prestashop>sendinblue_57a10f12630d95641ec6dfc7bed9e97c'] = 'Non appena il modulo sarà compilato, il tuo contatto riceverà un\'email con un link di conferma dell\'iscrizione.';
-$_MODULE['<{sendinblue}prestashop>sendinblue_ff34177dd7962e6ea1333608e15aa7cc'] = 'URL di reindirizzamento dopo clic sull\'email di convalida';
-$_MODULE['<{sendinblue}prestashop>sendinblue_bd0e0e73963656085f28e413ea9eabd5'] = 'Reindirizza il tuo contatto verso una landing page o il tuo sito dopo che ha convalidato il link di conferma nell\'email.';
-$_MODULE['<{sendinblue}prestashop>sendinblue_70f2b59d436d6acb605f1c0031953af2'] = 'Invia un\'email di conferma finale';
-$_MODULE['<{sendinblue}prestashop>sendinblue_d527884301d3208463b2b5f6f164aabe'] = 'Dopo che un contatto ha cliccato sul link dell\'email di conferma di doppio opt-in, inviagli un\'email finale di conferma';
-$_MODULE['<{sendinblue}prestashop>sendinblue_06933067aafd48425d67bcb01bba5cb6'] = 'Aggiorna';
-$_MODULE['<{sendinblue}prestashop>sendinblue_11af2f30bc4f0c405c00d14a359fa061'] = 'Importa vecchi iscritti';
-$_MODULE['<{sendinblue}prestashop>sendinblue_4a85edadc7601bdb29c2c8593a59ca03'] = 'Per sincronizzare le email dei tuoi clienti della piattaforma SendinBlue verso il tuo sito di E-commerce, bisogna eseguire';
 $_MODULE['<{sendinblue}prestashop>sendinblue_c2e2fce3a995f59900d7afbbe58683f5'] = 'questo link';
-$_MODULE['<{sendinblue}prestashop>sendinblue_20f6cf4b46982d608dc164f23249b7c3'] = 'ogni giorno';
-$_MODULE['<{sendinblue}prestashop>sendinblue_4b65c10607d36f0b385917e536f204a8'] = 'Se cambi il nome del tuo negozio (attualmente ';
-$_MODULE['<{sendinblue}prestashop>sendinblue_33f0325251ddc8bc133cc6498eb802a3'] = '), il valore del token cambierà.';
 $_MODULE['<{sendinblue}prestashop>sendinblue_b9a62d1a7ff5b5959a10a47dbf959deb'] = 'Attiva l\'SMTP di SendinBlue per le tue email transazionali';
 $_MODULE['<{sendinblue}prestashop>sendinblue_66f7086b92fafcfa511d04703dd76a3a'] = 'L\'SMTP di SendinBlue permette di inviare email transazionali (un\'email transazionale è inviata per attestare una transazione o un evento. Esempio: email d\'iscrizione avvenuta, di conferma di un ordine, una fattura, ...). Attivando questa funzionalità, sei sicuro che le tue email transazionali arrivino ai tuoi destinatari e puoi consultare lo storico delle tue email (apertura, clic, ...).';
 $_MODULE['<{sendinblue}prestashop>sendinblue_40be97420d49acc09e8ec2dc60e02533'] = 'Invia un\'email di test a';
@@ -115,6 +94,7 @@ $_MODULE['<{sendinblue}prestashop>sendinblue_f4f70727dc34561dfde1a3c529b6205c'] 
 $_MODULE['<{sendinblue}prestashop>sendinblue_495a3b3985cc02dbf7b4111b4e913d8a'] = 'Attiva il modulo SendinBlue';
 $_MODULE['<{sendinblue}prestashop>sendinblue_656a6828d7ef1bb791e42087c4b5ee6e'] = 'Chiave API';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ab07708173b94fb02480c589572ded63'] = 'Inserisci la tua chiave API collegata al tuo account SendinBlue. E\' disponibile a questa pagina: https://my.sendinblue.com/advanced/apikey. Se non possiedi un account SendinBlue, devi crearne uno sul sito https://www.sendinblue.com';
+$_MODULE['<{sendinblue}prestashop>sendinblue_06933067aafd48425d67bcb01bba5cb6'] = 'Aggiorna';
 $_MODULE['<{sendinblue}prestashop>sendinblue_f7dc297e2a139ab4f5a771825b46df43'] = 'Sei stato disiscritto correttamente';
 $_MODULE['<{sendinblue}prestashop>sendinblue_ed3cd7b3cc134222fa70602921ec27e1'] = 'Sei stato iscritto correttamente';
 $_MODULE['<{sendinblue}prestashop>sendinblue_77a32ea63cbd2ec3475ce4db5789bb0e'] = 'Seleziona';
@@ -126,6 +106,24 @@ $_MODULE['<{sendinblue}prestashop>ajaxuserlist_7fb55ed0b7a30342ba6da306428cae04'
 $_MODULE['<{sendinblue}prestashop>ajaxuserlist_dd1f775e443ff3b9a89270713580a51b'] = 'Precedente';
 $_MODULE['<{sendinblue}prestashop>ajaxuserlist_10ac3d04253ef7e1ddc73e6091c0cd55'] = 'Successivo';
 $_MODULE['<{sendinblue}prestashop>ajaxuserlist_d55b30607c2a9a2616347d6edb789f6b'] = 'Ultima pagina';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_a9688747b1ce4017d5da98785cea2a0c'] = 'Attiva SendinBlue per gestire i tuoi contatti';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_6be4b14275fbb412209febb0fba11ab7'] = 'Attivando questa funzionalità, i tuoi nuovi contatti saranno automaticamente aggiunti / disiscritti da SendinBlue. Per una sincronizzazione inversa (SendinBlue verso Prestashop), devi eseguire ogni giorno l\'url dal CRON (vedi la nota sotto)';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_4a1ca4af1ec428d0aee168f5b73eebda'] = 'Nessun conferma';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_137660b92b41a3e9b0fb5df10a693e8b'] = 'Con questa opzione, il tuo contatto s\'iscrive direttamente nella tua lista lasciando il suo indirizzo email. Non riceve nessuna email di conferma.';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_4ec1657ee7a08de4a59607966b2edb9b'] = 'Conferma semplice';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_160f6aa6e1de693701cb8a9bbe4f5b07'] = 'Scegliendo questa opzione, il tuo contatto s\'iscriverà direttamente alla lista lasciando il suo indirizzo email nel modulo. Gli verrà inviata automaticamente un\'email di conferma a seguito della sua iscrizione.';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_1c5986e9ad60ea5617160e2c594424e8'] = 'Conferma double optin';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_ab11f9db98c190d82753021f08041c22'] = 'Se scegli la conferma Doppio opt-in, l\'abbonato riceverà un email che lo invita a confermare l\'iscrizione. Prima della conferma, il contatto è salvato nella scheda \'FORM\', lista \'Temp - DOUBLE OPTIN\', dopo la conferma, il contatto è salvato nella \'Lista corrispondente\' scelta qui in basso.';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_57a10f12630d95641ec6dfc7bed9e97c'] = 'Non appena il modulo sarà compilato, il tuo contatto riceverà un\'email con un link di conferma dell\'iscrizione.';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_ff34177dd7962e6ea1333608e15aa7cc'] = 'URL di reindirizzamento dopo clic sull\'email di convalida';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_bd0e0e73963656085f28e413ea9eabd5'] = 'Reindirizza il tuo contatto verso una landing page o il tuo sito dopo che ha convalidato il link di conferma nell\'email.';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_70f2b59d436d6acb605f1c0031953af2'] = 'Invia un\'email di conferma finale';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_d527884301d3208463b2b5f6f164aabe'] = 'Dopo che un contatto ha cliccato sul link dell\'email di conferma di doppio opt-in, inviagli un\'email finale di conferma';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_06933067aafd48425d67bcb01bba5cb6'] = 'Aggiorna';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_11af2f30bc4f0c405c00d14a359fa061'] = 'Importa vecchi iscritti';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_4a85edadc7601bdb29c2c8593a59ca03'] = 'Per sincronizzare le email dei tuoi clienti della piattaforma SendinBlue verso il tuo sito di E-commerce, bisogna eseguire';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_20f6cf4b46982d608dc164f23249b7c3'] = 'ogni giorno';
+$_MODULE['<{sendinblue}prestashop>sendinsyncronizeblock_ffd68064d8b9fa3168cec7d4e15a629a'] = 'Se cambi il nome del tuo negozio (attualmente ), il valore del token cambierà.';
 $_MODULE['<{sendinblue}prestashop>smssetting_24cb398136bc32e39be4044b0ff91466'] = 'Gestione degli SMS';
 $_MODULE['<{sendinblue}prestashop>smssetting_0edc8732de384f42f037beb08312e312'] = 'Attualmente, hai';
 $_MODULE['<{sendinblue}prestashop>smssetting_1d850b95b3a1504ed22da3ea7a45df18'] = 'crediti SMS. Per acquistare più crediti, clicca ';
