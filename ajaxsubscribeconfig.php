@@ -33,11 +33,11 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 
 $id_shop_group = Tools::getValue('id_shop_group', 'NULL');
 $id_shop = Tools::getValue('id_shop', 'NULL');
-$manage_subs_val = Tools::getValue('managesubscribe');
 $sendin = new Sendinblue();
 $resp = $sendin->defaultNlStatus();
 
 if ($resp == 1) {
+	$manage_subs_val = Tools::getValue('managesubscribe');
     Configuration::updateValue('Sendin_Subscribe_Setting', $manage_subs_val, '', $id_shop_group, $id_shop);
     echo 'done';
 } else {
