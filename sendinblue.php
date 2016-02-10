@@ -267,6 +267,8 @@ class Sendinblue extends Module
                             $this->sendWsTemplateMail($this->email);
                         }
                     }
+                } elseif(isset($newsletter_status) && $newsletter_status == 0 && Tools::isSubmit('submitIdentity')) {
+                    $this->unsubscribeByruntime($this->email);
                 }
             }
         } else {
