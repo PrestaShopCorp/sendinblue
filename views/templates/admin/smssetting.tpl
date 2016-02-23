@@ -305,6 +305,26 @@
                                           </td>
                                        </tr>
                                        
+                                       <tr class='sib_datepicker' style="display:none;">
+                                          <td valign="top"><label>{l s='Schedule your sms campaign' mod='sendinblue'}</label></td>
+                                          
+                                          <td>
+                                             <input name="sib_datetimepicker"  id="sib_datetimepicker" type="text" value="" class="input_bx" />&nbsp;&nbsp;
+                                             <select name="hour">
+                                             <option value='0'>{l s='Hour' mod='sendinblue'}</option>
+                                             {for $counter=0 to 23}
+                                             <option>{$counter|escape:'htmlall':'UTF-8'}</option>
+                                             {/for}
+                                             </select>&nbsp;&nbsp;
+                                             <select name="minute">
+                                             <option value='0'>{l s='Minute' mod='sendinblue'}</option>
+                                             {for $counter=0 to 50 step 5}
+                                             <option>{$counter|escape:'htmlall':'UTF-8'}</option>
+                                             {/for}
+                                             </select>
+                                          </td>                                          
+                                       </tr>
+
                                        <tr>
                                           <td valign="top"><label>{l s='Sender' mod='sendinblue'}</label></td>
                                           <td>
@@ -315,6 +335,7 @@
                                              
                                           </td>
                                        </tr>
+
                                        <tr>
                                           <td valign="top"><label>{l s='Message' mod='sendinblue'}</label></td>
                                           <td>

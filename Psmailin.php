@@ -24,7 +24,7 @@
  * International Registered Trademark & Property of PrestaShop SA
  */
 
-class Mailin
+class Psmailin
 {
     public $api_key;
     public $base_url;
@@ -46,12 +46,8 @@ class Mailin
         $ch = curl_init($called_url);
         $auth_header = 'api-key:'.$this->api_key;
         $content_header = "Content-Type:application/json";
-        if (Tools::strtoupper(Tools::substr(PHP_OS, 0, 3)) === 'WIN') {
-            // Windows only over-ride
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        }
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array($auth_header, $content_header));
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);

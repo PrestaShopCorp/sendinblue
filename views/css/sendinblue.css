@@ -356,3 +356,13 @@ nobootstrap {
 .leftblock{height:20px;}
 .top{height:20px;}
 .footer_sendin{height:20px!important; font-size:12px!important; padding-top:0!important;}
+.inner_manage_box {
+	display: none;
+}
+.radio_group_option label{width:auto;}
+.radio_group_option input[type=radio]{float: left;margin-right: 5px;}
+.radio_group_option .manage_subscribe_block{margin-bottom: 8px;}
+.inner_manage_box{margin: 3px 0 0 20px;}
+.manage_subscribe_block label{padding-right:5px;}
+.clearfix{clear:both;width:100%;}
+.tableblock tr td{padding:5px; border-bottom:0px;}

@@ -30,25 +30,17 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
     die('Error: Invalid Token');
 }
 
-$data = Tools::getValue('response');
+$data = Tools::file_get_contents('php://input');
 $res_value = Tools::jsonDecode($data, true);
 
-if (empty($res_value['errMsg'])) {
-    foreach ($res_value['result'] as $value) {
-        $result = Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'customer`
-			SET newsletter="' . pSQL($value['s']) . '",
-			newsletter_date_add = "' . pSQL($value['m']) . '",
-			date_upd = "' . pSQL(date('Y-m-d H:i:s')) . '"
-			WHERE email = "' . pSQL($value['e']) . '" ');
-        $result = Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'sendin_newsletter`
-			SET active="' . pSQL($value['s']) . '",
-			newsletter_date_add = "' . pSQL($value['m']) . '"
-			WHERE email = "' . pSQL($value['e']) . '" ');
-    }
-    
-    $handle = fopen(_PS_MODULE_DIR_ . 'sendinblue/csv/SyncToSendinblue.csv', 'w');
-    fclose($handle);
+if ($res_value['event'] == 'unsubscribe' || $res_value['event'] == 'hard_bounce' || $res_value['event'] == 'spam') {
+    Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'customer`
+        SET newsletter="' . pSQL('0') . '",
+        newsletter_date_add = "' . pSQL($res_value['date_event']) . '",
+        date_upd = "' . pSQL(date('Y-m-d H:i:s')) . '"
+        WHERE email = "' . pSQL($res_value['email']) . '" ');
+    Db::getInstance()->Execute('UPDATE  `' . _DB_PREFIX_ . 'sendin_newsletter`
+        SET active="' . pSQL('0') . '",
+        newsletter_date_add = "' . pSQL($res_value['date_event']) . '"
+        WHERE email = "' . pSQL($res_value['email']) . '" ');
 }
-
-echo 'done';
-exit;

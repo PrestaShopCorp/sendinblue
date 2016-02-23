@@ -35,6 +35,7 @@ if ($token != $ps_shop_name_enc) {
     die('Error: Invalid Token');
 }
 
+
 $id_shop_group = Tools::getValue('id_shop_group', 'NULL');
 $id_shop = Tools::getValue('id_shop', 'NULL');
 $sendin = new Sendinblue();
@@ -47,40 +48,32 @@ if ($sendin_order_track_status == 0) {
     foreach ($key_value as $linedata) {
         fwrite($handle, $linedata . "\n");
     }
-    $customer_detail = $sendin->getAllCustomers($id_shop_group, $id_shop);
+    $customer_detail = $sendin->getAllCustomersofOrder($id_shop_group, $id_shop);
     foreach ($customer_detail as $customer_value) {
         $orders = Order::getCustomerOrders($customer_value['id_customer']);
         if (count($orders) > 0) {
-            $data = array();
-            $data['key'] = Configuration::get('Sendin_Api_Key', '', $id_shop_group, $id_shop);
-            $data['webaction'] = 'USERS-STATUS';
-            $data['email'] = $customer_value['email'];
-            $sendin->curlRequest($data);
-            $user_status = Tools::jsonDecode($sendin->curlRequest($data), true);
-            
-            if ($user_status['result'] != '') {
-                foreach ($orders as $orders_data) {
-                    if (version_compare(_PS_VERSION_, '1.5', '>=')) {
-                        $order_id = $orders_data['reference'];
-                    } else {
-                        $order_id = $orders_data['id_order'];
-                    }
-                    $order_price = Tools::safeOutput($orders_data['total_paid']);
-                    $date_value = $sendin->getApiConfigValue($id_shop_group, $id_shop);
-                    
-                    if ($date_value->date_format == 'dd-mm-yyyy') {
-                        $date = date('d-m-Y', strtotime($orders_data['date_add']));
-                    } else {
-                        $date = date('m-d-Y', strtotime($orders_data['date_add']));
-                    }
-                    $order_data = array();
-                    $order_data[] = array($customer_value['email'], $order_id, $order_price, $date);
-                    
-                    foreach ($order_data as $line) {
-                        fputcsv($handle, $line);
-                    }
+            foreach ($orders as $orders_data) {
+                if (version_compare(_PS_VERSION_, '1.5', '>=')) {
+                    $order_id = $orders_data['reference'];
+                } else {
+                    $order_id = $orders_data['id_order'];
+                }
+                $order_price = Tools::safeOutput($orders_data['total_paid']);
+                $date_value = $sendin->getApiConfigValue($id_shop_group, $id_shop);
+                
+                if ($date_value->date_format == 'dd-mm-yyyy') {
+                    $date = date('d-m-Y', strtotime($orders_data['date_add']));
+                } else {
+                    $date = date('m-d-Y', strtotime($orders_data['date_add']));
+                }
+                $order_data = array();
+                $order_data[] = array($customer_value['email'], $order_id, $order_price, $date);
+                
+                foreach ($order_data as $line) {
+                    fputcsv($handle, $line);
                 }
             }
+            
         }
     }
     fclose($handle);

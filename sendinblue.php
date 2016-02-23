@@ -33,17 +33,18 @@ if (!class_exists('Customer')) {
 }
 
 if (version_compare(_PS_VERSION_, '1.4.5', '<')) {
-    require(_PS_CLASS_DIR_. '/../modules/sendinblue/Mailin.php');
+    if (!class_exists('Psmailin')) {
+        include_once(_PS_CLASS_DIR_. '/../modules/sendinblue/Psmailin.php');
+    }
     include_once (_PS_CLASS_DIR_. '/../modules/sendinblue/sendinblueResources.php');
     $sendinblue_resources = new SendinblueResources();
-    if ($sendinblue_resources->checkConditionOlderVersion()) {
-        include (_PS_CLASS_DIR_. '/../modules/sendinblue/config.php');
-    }
+    include (_PS_CLASS_DIR_. '/../modules/sendinblue/config.php');
 } else {
-    require(dirname(__FILE__) . '/Mailin.php');
+    if (!class_exists('Psmailin')) {
+        include_once(dirname(__FILE__) . '/Psmailin.php');
+    }
     include (dirname(__FILE__) . '/config.php');
 }
-
 
 class Sendinblue extends Module
 {
@@ -77,7 +78,7 @@ class Sendinblue extends Module
             $this->tab = 'advertising_marketing';
         }
         $this->author = 'SendinBlue';
-        $this->version = '2.5.3';
+        $this->version = '2.5.5';
         
         parent::__construct();
         
@@ -112,6 +113,13 @@ class Sendinblue extends Module
                 //Call the callhookRegister method to send an email to the SendinBlue user
                 //when someone registers.
                 $this->callhookRegister();
+            } else {
+                $pathconfig = new Pathfindsendinblue();
+                $this->local_path = $pathconfig->pathdisp();
+                
+                //Call the callhookRegister method to send an email to the SendinBlue user
+                //when someone registers.
+                $this->callhookRegister();
             }
         } else {
             $pathconfig = new Pathfindsendinblue();
@@ -139,6 +147,12 @@ class Sendinblue extends Module
         }
         
         $this->checkForUpdates();
+        if (Configuration::get('Sendin_Web_Hook_Status') != 1) {
+            $web_resp = $this->createPsWebHook();
+            if ($web_resp['code'] == 'success') {
+                Configuration::updateValue('Sendin_Web_Hook_Status', 1);
+            }
+        }
     }
     
     /**
@@ -146,7 +160,6 @@ class Sendinblue extends Module
      */
     public function checkSmtpStatus()
     {
-        
         //If the SendinBlue tracking code status is empty we set the status to 0
         if (Configuration::get('Sendin_Tracking_Status', '', $this->id_shop_group, $this->id_shop) == '') {
             Configuration::updateValue('Sendin_Tracking_Status', 0, '', $this->id_shop_group, $this->id_shop);
@@ -156,9 +169,8 @@ class Sendinblue extends Module
         if (Configuration::get('Sendin_Api_Smtp_Status', '', $this->id_shop_group, $this->id_shop) == '') {
             Configuration::updateValue('Sendin_Api_Smtp_Status', 0, '', $this->id_shop_group, $this->id_shop);
         }
-        
+
         //If module is disabled, we set the default value for PrestaShop SMTP
-        
     }
     
     /**
@@ -185,9 +197,10 @@ class Sendinblue extends Module
             $this->days = Tools::getValue('days');
             $this->months = Tools::getValue('months');
             $this->years = Tools::getValue('years');
+            $this->submit_identity = Tools::getValue('submitIdentity');
             $birthday = ($this->years . '-' . $this->months . '-' . $this->days);
-
             $this->context->controller->addJs($this->local_path . $this->name . '/views/js/sendinblue.js');
+
             // Load customer data for logged in user so that we can register his/her with sendinblue
             $customer_data = $this->getCustomersByEmail($this->email);
 
@@ -248,12 +261,14 @@ class Sendinblue extends Module
                     }
 
                     if (Tools::isSubmit('submitIdentity')) {
+                        // Code to update sendinblue with logged in user data.
                         $this->subscribeByruntimeRegister($this->email, $this->id_gender, $this->first_name, $this->last_name, $this->birthday, $this->id_lang, $phone_mobile, $this->newsletter, $this->id_shop_group, $this->id_shop);
-
-                        if (Tools::getValue('sendinflag') === '0') {
+                        if (Tools::getValue('sendinflag') == 0) {
                             $this->sendWsTemplateMail($this->email);
                         }
                     }
+                } elseif(isset($newsletter_status) && $newsletter_status == 0 && Tools::isSubmit('submitIdentity')) {
+                    $this->unsubscribeByruntime($this->email);
                 }
             }
         } else {
@@ -538,15 +553,15 @@ SELECT email, newsletter_date_add, ip_registration_newsletter, http_referer FROM
         }
         
         return Db::getInstance()->ExecuteS('
-SELECT LOWER(C.email) as email, C.newsletter AS newsletter, ' . _DB_PREFIX_ . 'country.call_prefix, PSA.phone_mobile, C.id_customer, PSA.date_upd
-FROM ' . _DB_PREFIX_ . 'customer as C LEFT JOIN ' . _DB_PREFIX_ . 'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
-(SELECT id_customer, MAX(date_upd) upd  FROM ' . _DB_PREFIX_ . 'address GROUP BY ' . _DB_PREFIX_ . 'address.id_customer))
-LEFT JOIN ' . _DB_PREFIX_ . 'country ON ' . _DB_PREFIX_ . 'country.id_country = PSA.id_country ' . $condition . '
-GROUP BY C.id_customer
-UNION
-(SELECT LOWER(A.email) as email, A.active AS newsletter, NULL AS call_prefix,
-NULL AS phone_mobile, "Nclient" AS id_customer, NULL AS date_upd
-FROM ' . _DB_PREFIX_ . 'sendin_newsletter AS A ' . $condition2 . ')  LIMIT ' . (int)$start . ',' . (int)$page);
+        SELECT LOWER(C.email) as email, C.newsletter AS newsletter, ' . _DB_PREFIX_ . 'country.call_prefix, PSA.phone_mobile, C.id_customer, PSA.date_upd
+        FROM ' . _DB_PREFIX_ . 'customer as C LEFT JOIN ' . _DB_PREFIX_ . 'address PSA ON (C.id_customer = PSA.id_customer and (PSA.id_customer, PSA.date_upd) IN
+        (SELECT id_customer, MAX(date_upd) upd  FROM ' . _DB_PREFIX_ . 'address GROUP BY ' . _DB_PREFIX_ . 'address.id_customer))
+        LEFT JOIN ' . _DB_PREFIX_ . 'country ON ' . _DB_PREFIX_ . 'country.id_country = PSA.id_country ' . $condition . '
+        GROUP BY C.id_customer
+        UNION
+        (SELECT LOWER(A.email) as email, A.active AS newsletter, NULL AS call_prefix,
+        NULL AS phone_mobile, "Nclient" AS id_customer, NULL AS date_upd
+        FROM ' . _DB_PREFIX_ . 'sendin_newsletter AS A ' . $condition2 . ')  LIMIT ' . (int)$start . ',' . (int)$page);
     }
     
     /**
@@ -578,7 +593,7 @@ FROM ' . _DB_PREFIX_ . 'sendin_newsletter AS A ' . $condition2 . ')  LIMIT ' . (
     {
         $condition = $this->conditionalValue();
         
-        return Db::getInstance()->getValue('SELECT  count(*) as Total FROM ' . _DB_PREFIX_ . 'sendin_newsletter where active = 1 ' . $condition);
+        return Db::getInstance()->getValue('SELECT  count(DISTINCT email) as Total FROM ' . _DB_PREFIX_ . 'sendin_newsletter where active = 1 ' . $condition);
     }
     
     /**
@@ -588,7 +603,7 @@ FROM ' . _DB_PREFIX_ . 'sendin_newsletter AS A ' . $condition2 . ')  LIMIT ' . (
     {
         $condition = $this->conditionalValue();
         
-        return Db::getInstance()->getValue('SELECT  count(*) as Total FROM ' . _DB_PREFIX_ . 'sendin_newsletter where active = 0 ' . $condition);
+        return Db::getInstance()->getValue('SELECT  count(DISTINCT email) as Total FROM ' . _DB_PREFIX_ . 'sendin_newsletter where active = 0 ' . $condition);
     }
     
     /**
@@ -915,9 +930,9 @@ WHERE email = "' . pSQL($this->email) . '"');
         $handle = fopen(_PS_MODULE_DIR_ . 'sendinblue/csv/ImportSubUsersToSendinblue.csv', 'w+');
         $key_value = array();
         if ($value_langauge->language == 'fr') {
-            $key_value[] = 'EMAIL,CIV,PRENOM,NOM,DDNAISSANCE,PS_LANG,CLIENT,SMS,GROUP_ID';
+            $key_value[] = 'EMAIL,CIV,PRENOM,NOM,DDNAISSANCE,PS_LANG,CLIENT,SMS,GROUP_ID,STORE_ID';
         } else {
-            $key_value[] = 'EMAIL,CIV,NAME,SURNAME,BIRTHDAY,PS_LANG,CLIENT,SMS,GROUP_ID';
+            $key_value[] = 'EMAIL,CIV,NAME,SURNAME,BIRTHDAY,PS_LANG,CLIENT,SMS,GROUP_ID,STORE_ID';
         }
         
         foreach ($key_value as $linedata) {
@@ -926,7 +941,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         
         if ($id_shop === 'NULL' && $id_shop_group === 'NULL') {
             $condition3 = '';
-        } elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL') {
+        } elseif ($id_shop_group !== 'NULL' && $id_shop === 'NULL') {
             $condition3 = 'AND id_shop_group =' . $id_shop_group;
         } else {
             $condition3 = 'AND id_shop_group =' . $id_shop_group . ' AND id_shop =' . $id_shop;
@@ -948,21 +963,25 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($unregister_result) {
                 foreach ($unregister_result as $unregister_row) {
                     if (version_compare(_PS_VERSION_, '1.5', '>=')) {
-                        $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE `active` = 1 AND email = "' . pSQL($unregister_row['email']) . '" GROUP BY email');
+                        $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid, GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE `active` = 1 AND email = "' . pSQL($unregister_row['email']) . '" GROUP BY email');
                         $data_group = $all_group_unsubs['groupid'];
+                        $storeid = $all_group_unsubs['storeid'];
                         if ($data_group === 'null') {
                             $data_group = 1;
                         }
+                        if ($storeid === 'null') {
+                            $storeid = 1;
+                        }
                         if ($value_langauge->language == 'fr') {
-                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'PRENOM' => '', 'NOM' => '', 'DDNAISSANCE' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => $data_group);
+                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'PRENOM' => '', 'NOM' => '', 'DDNAISSANCE' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => $data_group, 'STORE_ID' => $storeid);
                         } else {
-                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'NAME' => '', 'SURNAME' => '', 'BIRTHDAY' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => $data_group);
+                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'NAME' => '', 'SURNAME' => '', 'BIRTHDAY' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => $data_group, 'STORE_ID' => $storeid);
                         }
                     } else {
                         if ($value_langauge->language == 'fr') {
-                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'PRENOM' => '', 'NOM' => '', 'DDNAISSANCE' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => '');
+                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'PRENOM' => '', 'NOM' => '', 'DDNAISSANCE' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => '', 'STORE_ID' => '');
                         } else {
-                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'NAME' => '', 'SURNAME' => '', 'BIRTHDAY' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => '');
+                            $register_email[] = array('EMAIL' => $unregister_row['email'], 'CIV' => '', 'NAME' => '', 'SURNAME' => '', 'BIRTHDAY' => '', 'PS_LANG' => '', 'CLIENT' => 0, 'SMS' => '', 'GROUP_ID' => '', 'STORE_ID' => '');
                         }
                     }
                 }
@@ -986,7 +1005,7 @@ WHERE email = "' . pSQL($this->email) . '"');
             
             if ($id_shop === 'NULL' && $id_shop_group === 'NULL') {
                 $condition2 = '';
-            } elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL') {
+            } elseif ($id_shop_group !== 'NULL' && $id_shop === 'NULL') {
                 $condition2 = ' AND C.id_shop_group =' . $id_shop_group;
             } else {
                 $condition2 = ' AND C.id_shop_group =' . $id_shop_group . ' AND C.id_shop =' . $id_shop;
@@ -997,7 +1016,7 @@ WHERE email = "' . pSQL($this->email) . '"');
                 // select only newly added users and registered user
                 
                 $register_result = Db::getInstance()->ExecuteS('
-                SELECT GROUP_CONCAT(C.id_customer) as cid, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, C.id_lang, GROUP_CONCAT(C.id_shop_group) as shopgroupid
+                SELECT GROUP_CONCAT(C.id_customer) as cid, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, C.id_lang, GROUP_CONCAT(C.id_shop_group) as shopgroupid, GROUP_CONCAT(C.id_shop) as storeid
                 FROM ' . _DB_PREFIX_ . 'customer as C WHERE C.newsletter=1' . $condition2 . '
                 GROUP BY C.email limit ' . $start . ',' . $end . '');
                 if ($register_result) {
@@ -1042,22 +1061,29 @@ WHERE email = "' . pSQL($this->email) . '"');
                             $civility = '';
                         }
                         $all_group_subs = array();
-                        $all_group_subs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE `active` = 1 AND email = "' . pSQL($register_row['email']) . '" GROUP BY email');
+                        $all_group_subs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid, GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE `active` = 1 AND email = "' . pSQL($register_row['email']) . '" GROUP BY email');
                         if (!empty($all_group_subs['groupid'])) {
                             $data_second = explode(',', $all_group_subs['groupid']);
                             $data_first = explode(',', $register_row['shopgroupid']);
                             $uniqedata = array_merge($data_first, $data_second);
                             $value_merge = array_unique($uniqedata);
                             $value_group = implode(',', $value_merge);
+
+                            $data_second_store = explode(',', $all_group_subs['storeid']);
+                            $data_first_store = explode(',', $register_row['storeid']);
+                            $uniqedata_store = array_merge($data_first_store, $data_second_store);
+                            $value_merge_store = array_unique($uniqedata_store);
+                            $value_group_store = implode(',', $value_merge_store);
                         } else {
                             $value_group = $register_row['shopgroupid'];
+                            $value_group_store = $register_row['storeid'];
                         }
                         
                         $langisocode = Language::getIsoById((int)$register_row['id_lang']);
                         if ($value_langauge->language == 'fr') {
-                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'PRENOM' => $register_row['firstname'], 'NOM' => $register_row['lastname'], 'DDNAISSANCE' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group);
+                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'PRENOM' => $register_row['firstname'], 'NOM' => $register_row['lastname'], 'DDNAISSANCE' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group, 'STORE_ID' => $value_group_store);
                         } else {
-                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'NAME' => $register_row['firstname'], 'SURNAME' => $register_row['lastname'], 'BIRTHDAY' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group);
+                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'NAME' => $register_row['firstname'], 'SURNAME' => $register_row['lastname'], 'BIRTHDAY' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group, 'STORE_ID' => $value_group_store);
                         }
                     }
                 }
@@ -1073,7 +1099,7 @@ WHERE email = "' . pSQL($this->email) . '"');
                     
                     // select only newly added users and registered user
                     $register_result = Db::getInstance()->ExecuteS('
-                    SELECT  GROUP_CONCAT(C.id_customer) as cid, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, GROUP_CONCAT(id_shop_group) as shopgroupid
+                    SELECT  GROUP_CONCAT(C.id_customer) as cid, C.newsletter, C.email, C.firstname, C.lastname, C.birthday, C.id_gender, GROUP_CONCAT(id_shop_group) as shopgroupid, GROUP_CONCAT(id_shop) as storeid
                     FROM ' . _DB_PREFIX_ . 'customer as C WHERE C.newsletter=1' . $condition2 . '
                     GROUP BY C.email limit ' . $start . ',' . $end . '');
                 } else {
@@ -1137,25 +1163,33 @@ WHERE email = "' . pSQL($this->email) . '"');
                         
                         if (version_compare(_PS_VERSION_, '1.5.0.0', '>=')) {
                             $all_group_subs = array();
-                            $all_group_subs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE `active` = 1 AND email = "' . pSQL($register_row['email']) . '" GROUP BY email');
+                            $all_group_subs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid, GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE `active` = 1 AND email = "' . pSQL($register_row['email']) . '" GROUP BY email');
                             if (!empty($all_group_subs['groupid'])) {
                                 $data_second = explode(',', $all_group_subs['groupid']);
                                 $data_first = explode(',', $register_row['shopgroupid']);
                                 $uniqedata = array_merge($data_first, $data_second);
                                 $value_merge = array_unique($uniqedata);
                                 $value_group = implode(',', $value_merge);
+
+                                $data_second_store = explode(',', $all_group_subs['storeid']);
+                                $data_first_store = explode(',', $register_row['storeid']);
+                                $uniqedata_store = array_merge($data_first_store, $data_second_store);
+                                $value_merge_store = array_unique($uniqedata_store);
+                                $value_group_store = implode(',', $value_merge_store);
                             } else {
                                 $value_group = $register_row['shopgroupid'];
+                                $value_group_store = $register_row['storeid'];
                             }
                         } else {
                             $value_group = '';
+                            $value_group_store = '';
                         }
                         
                         $langisocode = '';
                         if ($value_langauge->language == 'fr') {
-                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'PRENOM' => $register_row['firstname'], 'NOM' => $register_row['lastname'], 'DDNAISSANCE' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group);
+                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'PRENOM' => $register_row['firstname'], 'NOM' => $register_row['lastname'], 'DDNAISSANCE' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group, 'STORE_ID' => $value_group_store);
                         } else {
-                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'NAME' => $register_row['firstname'], 'SURNAME' => $register_row['lastname'], 'BIRTHDAY' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group);
+                            $register_email[] = array('EMAIL' => $register_row['email'], 'CIV' => $civility, 'NAME' => $register_row['firstname'], 'SURNAME' => $register_row['lastname'], 'BIRTHDAY' => $birthday, 'PS_LANG' => $langisocode, 'CLIENT' => 1, 'SMS' => $mobile, 'GROUP_ID' => $value_group, 'STORE_ID' => $value_group_store);
                         }
                     }
                 }
@@ -1514,7 +1548,30 @@ WHERE email = "' . pSQL($this->email) . '"');
     {
         $sender_campaign = Tools::getValue('sender_campaign');
         $sender_campaign_message = Tools::getValue('sender_campaign_message');
-        
+        $schedule_month = Tools::getValue('sib_datetimepicker');
+        $schedule_hour = Tools::getValue('hour');
+        $schedule_minute = Tools::getValue('minute');
+        if ($schedule_hour < 10) {
+            $schedule_hour = '0'.$schedule_hour;
+        }
+        if ($schedule_minute < 10) {
+            $schedule_minute = '0'.$schedule_minute;
+        }
+
+        $schedule_time = $schedule_month.' '.$schedule_hour.':'.$schedule_minute.':00';
+
+        $current_time = date('Y-m-d H:i:s', time() + 300);
+        $currenttm = strtotime($current_time);
+        $scheduletm = strtotime($schedule_time);
+
+        if (isset($sender_campaign) && $sender_campaign == '') {
+            return $this->redirectPage($this->l('Please fill the sender field'), 'ERROR');
+        } elseif ($schedule_time == '' || $scheduletm < $currenttm) {
+
+            return $this->redirectPage($this->l('Scheduled date may not be prior to the current date'), 'ERROR');
+        } elseif ($sender_campaign_message == '') {
+            return $this->redirectPage($this->l('Please fill the message field'), 'ERROR');
+        }
         if ($sender_campaign != '' && $sender_campaign_message != '') {
             $camp_name = 'SMS_' . date('Ymd');
             $key = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
@@ -1569,7 +1626,7 @@ WHERE email = "' . pSQL($this->email) . '"');
             
             // mandatory if SMS campaign is scheduled
             $arr['listids'] = $list_id;
-            $arr['schedule'] = date('Y-m-d H:i:s', time() + 300);
+            $arr['schedule'] = $schedule_time;
             $result = $this->curlRequest($arr);
             $data = Tools::jsondecode($result);
             if (!empty($data->errorMsg)) {
@@ -1904,6 +1961,12 @@ WHERE email = "' . pSQL($this->email) . '"');
                             Configuration::deleteByName('Sendin_Api_Key_Status');
                             Configuration::deleteByName('Sendin_Api_Smtp_Status');
                             Configuration::deleteByName('Sendin_Selected_List_Data');
+                            Configuration::deleteByName('Sendin_Confirm_Type');
+                            Configuration::deleteByName('Sendin_doubleoptin_redirect');
+                            Configuration::deleteByName('Sendin_Optin_Url_Check');
+                            Configuration::deleteByName('Sendin_final_confirm_email');
+                            Configuration::deleteByName('Sendin_optin_list_id');
+                            Configuration::deleteByName('Sendin_Final_Template_Id');
                         } else {
                             Configuration::deleteFromContext('Sendin_First_Request');
                             Configuration::deleteFromContext('Sendin_Subscribe_Setting');
@@ -1946,6 +2009,16 @@ WHERE email = "' . pSQL($this->email) . '"');
                     
                     //We set the default status of SendinBlue SMTP and tracking code to 0
                     $this->checkSmtpStatus();
+                    if (version_compare(_PS_VERSION_, '1.5', '<')) {
+                        Configuration::updateValue('NW_CONFIRMATION_EMAIL', 0);
+                    } else {
+                        Configuration::updateValue('NW_CONFIRMATION_EMAIL', 0);
+                        Configuration::updateValue('NW_VERIFICATION_EMAIL', 0);
+                    }
+                    $web_resp = $this->createPsWebHook();
+                    if ($web_resp['code'] == 'success') {
+                        Configuration::updateValue('Sendin_Web_Hook_Status', 1);
+                    }
                     Configuration::updateValue('SENDINBLUE_CONFIGURATION_OK', true, '', $this->id_shop_group, $this->id_shop);
                     $this->redirectPage($this->l('Successfully updated'), 'SUCCESS');
                 }
@@ -2422,9 +2495,9 @@ WHERE email = "' . pSQL($this->email) . '"');
         $data['webaction'] = 'ATTRIBUTES_CREATION';
         $value_langauge = $this->getApiConfigValue();
         if ($value_langauge->language == 'fr') {
-            $data['normal_attributes'] = 'CIV,text|PRENOM,text|NOM,text|DDNAISSANCE,date|PS_LANG,text|SMS,text|GROUP_ID,text|CLIENT,number';
+            $data['normal_attributes'] = 'CIV,text|PRENOM,text|NOM,text|DDNAISSANCE,date|PS_LANG,text|SMS,text|GROUP_ID,text|STORE_ID,text|CLIENT,number';
         } else {
-            $data['normal_attributes'] = 'CIV,text|NAME,text|SURNAME,text|BIRTHDAY,date|PS_LANG,text|SMS,text|GROUP_ID,text|CLIENT,number';
+            $data['normal_attributes'] = 'CIV,text|NAME,text|SURNAME,text|BIRTHDAY,date|PS_LANG,text|SMS,text|GROUP_ID,text|STORE_ID,text|CLIENT,number';
         }
         $data['transactional_attributes'] = 'ORDER_ID,id|ORDER_DATE,date|ORDER_PRICE,number';
         $data['calculated_value'] = 'PS_LAST_30_DAYS_CA,
@@ -2466,7 +2539,7 @@ WHERE email = "' . pSQL($this->email) . '"');
     /**
      * Subscribe a subscriber from SendinBlue.
      */
-    public function subscribeByruntime($email, $post_value = '')
+    public function subscribeByruntime($email, $post_value = '', $list_id = '')
     {
         $id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
         $id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
@@ -2593,17 +2666,35 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($id_shop_group === null) {
                 $id_shop_group = 1;
             }
-            $all_group_reg = array();
-            $all_group_unsubs = array();
+
             $all_group_reg = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             
             $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+            $data_first = array();
+            $data_second = array();
             $data_first = explode(',', $all_group_reg['groupid']);
             $data_second = explode(',', $all_group_unsubs['groupid']);
             $value_merge = array_merge($data_first, $data_second);
             $value_group = implode(',', array_filter($value_merge));
             $attribute_data[] = $value_group;
             $attribute_key[] = 'GROUP_ID';
+        }
+        if (version_compare(_PS_VERSION_, '1.5.3.4', '>') && isset($id_shop) && !empty($email)) {
+            if ($id_shop === null) {
+                $id_shop = 1;
+            }
+
+            $all_group_reg_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+            
+            $all_group_unsubs_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+            $data_first_store = array();
+            $data_second_store = array();
+            $data_first_store = explode(',', $all_group_reg_store['storeid']);
+            $data_second_store = explode(',', $all_group_unsubs_store['storeid']);
+            $value_merge_store = array_merge($data_first_store, $data_second_store);
+            $value_store = implode(',', array_filter($value_merge_store));
+            $attribute_data[] = $value_store;
+            $attribute_key[] = 'STORE_ID';
         }
         
         if ($client >= 0) {
@@ -2612,6 +2703,14 @@ WHERE email = "' . pSQL($this->email) . '"');
         }
         $attribute_data = implode('|', $attribute_data);
         $attribute = $attribute_data;
+        $Sendin_Confirm_Type = Configuration::get('Sendin_Confirm_Type', '', $id_shop_group, $id_shop);
+        if (empty($list_id)) {
+            if (isset($Sendin_Confirm_Type) && $Sendin_Confirm_Type === 'doubleoptin') {
+                $list_id = Configuration::get('Sendin_optin_list_id', '', $id_shop_group, $id_shop);
+            } else {
+                $list_id = Configuration::get('Sendin_Selected_List_Data', '', $id_shop_group, $id_shop);
+            }
+        }
         
         $data = array();
         $data['key'] = trim(Configuration::get('Sendin_Api_Key', '', $id_shop_group, $id_shop));
@@ -2625,14 +2724,15 @@ WHERE email = "' . pSQL($this->email) . '"');
         $data['attributes_value'] = $attribute;
         $data['category'] = '';
         $data['email'] = $email;
-        $data['listid'] = Configuration::get('Sendin_Selected_List_Data', '', $id_shop_group, $id_shop);
+        $data['listid'] = $list_id;
+        
         return $this->curlRequest($data);
     }
     
     /**
      * Add / Modify subscribers with their full details like Firstname, Lastname etc.
      */
-    public function subscribeByruntimeRegister($email, $id_gender, $fname, $lname, $birthday, $langisocode, $phone_mobile, $newsletter_status = '', $id_shop_group = 'NULL', $id_shop = 'NULL')
+    public function subscribeByruntimeRegister($email, $id_gender, $fname, $lname, $birthday, $langisocode, $phone_mobile, $newsletter_status = '', $id_shop_group = 'NULL', $id_shop = 'NULL', $list_id = '')
     {
         $id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
         $id_shop = !empty($id_shop) ? $id_shop : 'NULL';
@@ -2718,9 +2818,7 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($id_shop_group === null) {
                 $id_shop_group = 1;
             }
-            
-            $all_group_reg = array();
-            $all_group_unsubs = array();
+
             $all_group_reg = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             $all_group_unsubs = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop_group) as groupid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
             
@@ -2739,14 +2837,44 @@ WHERE email = "' . pSQL($this->email) . '"');
             $attribute_data[] = $value_group;
             $attribute_key[] = 'GROUP_ID';
         }
-        
+        if (version_compare(_PS_VERSION_, '1.5.3.4', '>') && isset($id_shop) && !empty($email)) {
+            if ($id_shop === null) {
+                $id_shop = 1;
+            }
+
+            $all_group_reg_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'customer  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+            $all_group_unsubs_store = Db::getInstance()->getRow('SELECT GROUP_CONCAT(id_shop) as storeid FROM ' . _DB_PREFIX_ . 'sendin_newsletter  WHERE email = "' . pSQL($email) . '" GROUP BY email');
+            
+            $data_first = array();
+            $data_second = array();
+            if (!empty($all_group_reg_store['storeid'])) {
+                $data_first = explode(',', $all_group_reg_store['storeid']);
+            }
+            
+            if (!empty($all_group_unsubs_store['storeid'])) {
+                $data_second = explode(',', $all_group_unsubs_store['storeid']);
+            }
+            
+            $value_merge_store = array_merge($data_first, $data_second);
+            $value_store = implode(',', $value_merge_store);
+            $attribute_data[] = $value_store;
+            $attribute_key[] = 'STORE_ID';
+        }
+
         $attribute_data = implode('|', $attribute_data);
         $attribute = $attribute_data;
         $data = array();
         $data['key'] = trim(Configuration::get('Sendin_Api_Key', '', $id_shop_group, $id_shop));
         $data['webaction'] = 'USERCREADITM';
         $data['email'] = $email;
-        
+        $Sendin_Confirm_Type = Configuration::get('Sendin_Confirm_Type', '', $id_shop_group, $id_shop);
+        if (empty($list_id)) {
+            if (isset($Sendin_Confirm_Type) && $Sendin_Confirm_Type === 'doubleoptin') {
+                $list_id = Configuration::get('Sendin_optin_list_id', '', $id_shop_group, $id_shop);
+            } else {
+                $list_id = Configuration::get('Sendin_Selected_List_Data', '', $id_shop_group, $id_shop);
+            }
+        }
         if ($newsletter_status == 0 || $newsletter_status == 1) {
             $data['blacklisted'] = 0;
         }
@@ -2755,7 +2883,8 @@ WHERE email = "' . pSQL($this->email) . '"');
         $data['attributes_name'] = $attribute_key;
         $data['attributes_value'] = $attribute;
         $data['category'] = '';
-        $data['listid'] = Configuration::get('Sendin_Selected_List_Data', '', $id_shop_group, $id_shop);
+        $data['listid'] = $list_id;
+        
         $this->curlRequest($data);
     }
     
@@ -2767,18 +2896,19 @@ WHERE email = "' . pSQL($this->email) . '"');
     {
         $id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
         $id_shop = !empty($id_shop) ? $id_shop : 'NULL';
+        $list_id = Configuration::get('Sendin_Selected_List_Data', '', $id_shop_group, $id_shop);
         
         if (version_compare(_PS_VERSION_, '1.5.3.4', '>')) {
             if (Db::getInstance()->getRow('SELECT `email` FROM ' . _DB_PREFIX_ . 'sendin_newsletter WHERE `email` = \'' . pSQL($customer_email) . '\'')) {
-                $this->subscribeByruntime($customer_email, $newsletter_status);
+                $this->subscribeByruntime($customer_email, $newsletter_status, $list_id);
             } elseif ($registered = Db::getInstance()->getRow('SELECT id_gender, firstname, lastname, birthday, id_lang FROM ' . _DB_PREFIX_ . 'customer WHERE `email` = \'' . pSQL($customer_email) . '\'')) {
-                $this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], $registered['id_lang'], $mobile_number, $newsletter_status, $id_shop_group, $id_shop);
+                $this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], $registered['id_lang'], $mobile_number, $newsletter_status, $id_shop_group, $id_shop, $list_id);
             }
         } else {
             if (Db::getInstance()->getRow('SELECT `email` FROM ' . _DB_PREFIX_ . 'sendin_newsletter WHERE `email` = \'' . pSQL($customer_email) . '\'')) {
-                $this->subscribeByruntime($customer_email, $newsletter_status);
+                $this->subscribeByruntime($customer_email, $newsletter_status, $list_id);
             } elseif ($registered = Db::getInstance()->getRow('SELECT id_gender, firstname, lastname, birthday FROM ' . _DB_PREFIX_ . 'customer WHERE `email` = \'' . pSQL($customer_email) . '\'')) {
-                $this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], '', $mobile_number, $newsletter_status, $id_shop_group, $id_shop);
+                $this->subscribeByruntimeRegister($customer_email, $registered['id_gender'], $registered['firstname'], $registered['lastname'], $registered['birthday'], '', $mobile_number, $newsletter_status, $id_shop_group, $id_shop, $list_id);
             }
         }
     }
@@ -2806,7 +2936,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         name="script" value="0" ' . (!Configuration::get('Sendin_Tracking_Status', '', $this->id_shop_group, $this->id_shop) ? 'checked="checked" ' : '') . '/>' . $this->l('No') . '
         <span class="toolTip"
         title="' . $this->l('This feature will allow you to transfer all your customers orders from PrestaShop into SendinBlue to implement your email marketing strategy.') . '">
-        &nbsp;</span>
+        </span>
         </td></tr>';
         if (Configuration::get('Sendin_Tracking_Status', '', $this->id_shop_group, $this->id_shop) && Configuration::get('Sendin_order_tracking_Status', '', $this->id_shop_group, $this->id_shop) != 1) {
             $st = '';
@@ -2832,46 +2962,14 @@ WHERE email = "' . pSQL($this->email) . '"');
      */
     public function syncronizeBlockCode()
     {
-        $this->_second_block_code = '<style type="text/css">.tableblock tr td{padding:5px; border-bottom:0px;}</style>
-        <form method="post" action="' . Tools::safeOutput($_SERVER['REQUEST_URI']) . '">
-        <table class="table tableblock hidetableblock form-data" style="margin-top:15px;" cellspacing="0" cellpadding="0" width="100%">
-        <thead>
-        <tr>
-        <th colspan="2">' . $this->l('Activate SendinBlue to manage subscribers') . '</th>
-        </tr>
-        </thead>
-        <tr>
-        <td style="width:250px">
-        <label> ' . $this->l('Activate SendinBlue to manage subscribers') . '
-        </label>
-        </td>
-        <td class="' . $this->cl_version . '"><input type="radio" class="managesubscribe" id="yessmtp"
-        style="margin-right:10px;" name="managesubscribe" value="1"
-        ' . (Configuration::get('Sendin_Subscribe_Setting', '', $this->id_shop_group, $this->id_shop) ? 'checked="checked" ' : '') . '/>' . $this->l('Yes') . '
-        <input type="radio" class="managesubscribe"
-        id="nosmtp" style="margin-left:20px;margin-right:10px;"
-        name="managesubscribe" value="0" ' . (!Configuration::get('Sendin_Subscribe_Setting', '', $this->id_shop_group, $this->id_shop) ? 'checked="checked" ' : '') . '/>' . $this->l('No') . '
-        <span class="toolTip"
-        title="' . $this->l('If you activate this feature, your new contacts will be automatically added to SendinBlue or unsubscribed from SendinBlue. To synchronize the other way (SendinBlue to PrestaShop), you should run the url (mentioned below) each day.') . '">
-        &nbsp;</span>
-        </td>
-        </tr>';
-        $this->_second_block_code.= '<tr class="managesubscribeBlock">' . $this->parselist() . '</tr>';
-        $this->_second_block_code.= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
-        <td>
-        </td>
-        </tr>';
-        $this->_second_block_code.= '<td style="width:250px" class="managesubscribeBlock">
-        <label> ' . $this->l('Manage follow up email for user subscription') . '
-        </label>
-        </td>
-        <td class="' . $this->cl_version . ' managesubscribeBlock"><div class="listData" style="text-align:left;"><select name="template" class="ui-state-default" style="width: 225px; height:22px; border-radius:4px; margin-right:5px;"><option value="">' . $this->l('Select Template') . '</option>
+        $temp_data = '';
+        $temp_data.= '<div class="listData ' . $this->cl_version . ' managesubscribeBlock" style="text-align:left;"><select name="template" class="ui-state-default" style="width: 225px; height:22px; border-radius:4px; margin:10px 0;"><option value="">' . $this->l('Select Template') . '</option>
         ';
         $options = '';
         $camp = $this->templateDisplay();
         if (!empty($camp->result->campaign_records)) {
             foreach ($camp->result->campaign_records as $template_data) {
-                if ($template_data->templ_status === 'Active') {
+                if ($template_data->templ_status === 'Active' && stristr($template_data->html_content, 'DOUBLEOPTIN') === false) {
                     $options.= '<option value="' . $template_data->id . '"';
                     if ($template_data->id == Configuration::get('Sendin_Template_Id', '', $this->id_shop_group, $this->id_shop)) {
                         $options.= 'selected="selected"';
@@ -2881,28 +2979,57 @@ WHERE email = "' . pSQL($this->email) . '"');
                 }
             }
         }
-        $this->_second_block_code.= $options . '</select><span class="toolTip"
+        $temp_data.= $options . '</select><span class="toolTip"
         title="' . $this->l('Select a SendinBlue template that will be sent personalized for each contact that subscribes to your newsletter') . '"
-        &nbsp;</span></div>
-        </td>
-        </tr>';
-        $this->_second_block_code.= '<tr class="managesubscribeBlock"><td>&nbsp;</td>
-        <td>
-        <input type="submit" name="submitForm2" value="' . $this->l('Update') . '" class="button" />&nbsp;
-        </td>
-        </tr><tr class="managesubscribeBlock"><td>&nbsp;</td><td colspan="2">';
-        $data = '';
-        if (Configuration::get('Sendin_import_user_status', '', $this->id_shop_group, $this->id_shop) == 1) {
-            $data.= '<input type="submit" name="submitUpdateImport" value="' . $this->l('Import Old Subscribers') . '" class="button" />&nbsp;</form>';
+        ></span></div>';
+
+        $temp_confirm = '';
+        $temp_confirm.= '<div class="listData ' . $this->cl_version . ' managesubscribeBlock" style="text-align:left;"><select name="template_final" class="ui-state-default" style="width: 225px; height:22px; border-radius:4px; margin:10px 0;"><option value="">' . $this->l('Select Template') . '</option>
+        ';
+        $options = '';
+        $camp = $this->templateDisplay();
+        if (!empty($camp->result->campaign_records)) {
+            foreach ($camp->result->campaign_records as $template_data) {
+                if ($template_data->templ_status === 'Active' && stristr($template_data->html_content, 'DOUBLEOPTIN') === false) {
+                    $options.= '<option value="' . $template_data->id . '"';
+                    if ($template_data->id == Configuration::get('Sendin_Final_Template_Id', '', $this->id_shop_group, $this->id_shop)) {
+                        $options.= 'selected="selected"';
+                    }
+
+                    $options.= '>' . $template_data->campaign_name . '</option>';
+                }
+            }
         }
-        $this->_second_block_code.= $data . '</td>
-        </tr><tr class="managesubscribeBlock" ><td colspan="3" class="' . $this->cl_version . '">' . $this->l('To synchronize the emails of your customers from SendinBlue platform to your e-commerce website, you should run') . '
-        <a target="_blank" href="' . $this->local_path . 'sendinblue/cron.php?token=' . Tools::encrypt(Configuration::get('PS_SHOP_NAME')) . '">
-        ' . $this->l('this link') . '</a> ';
-        $this->_second_block_code.= $this->l('each day.') . '
-        <span class="toolTip" title="' . $this->l('Note that if you change the name of your Shop (currently ') . Configuration::get('PS_SHOP_NAME') . $this->l(') the token value changes.') . '">&nbsp;</span></td></tr></table>';
-        
-        return $this->_second_block_code;
+        $temp_confirm.= $options . '</select><span class="toolTip"
+        title="' . $this->l('Select a SendinBlue template that will be sent personalized for each contact that subscribes to your newsletter') . '"
+        ></span></div>';
+
+        $sendin_smtp_detail = Configuration::get('Sendin_Smtp_Result', '', $this->id_shop_group, $this->id_shop);
+        $smtp_data = Tools::jsondecode($sendin_smtp_detail);
+        $sendin_smtp = !empty($smtp_data->result->relay_data->status) ? $smtp_data->result->relay_data->status : '';
+        $smtp_alert = '';
+        if ($sendin_smtp !== 'enabled') {
+            $smtp_alert = '<div class="alert '. $this->cl_version .'"> ' . $this->l('You need an active SMTP (transactional) account to be able to send confirmation emails. Please').' <a href="mailto:contact@sendinblue.com">' . $this->l('contact customer service').'</a> ' . $this->l('to activate it.').'</div>';
+        }
+
+        $this->context->smarty->assign('site_name', Configuration::get('PS_SHOP_NAME'));
+        $this->context->smarty->assign('link', '<a target="_blank" href="' . $this->local_path . 'sendinblue/cron.php?token=' . Tools::encrypt(Configuration::get('PS_SHOP_NAME')) . '">
+        ' . $this->l('this link') . '</a> ');
+        $this->context->smarty->assign('parselist', $this->parselist());
+        $this->context->smarty->assign('chkval', Configuration::get('Sendin_final_confirm_email', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('chkval_url', Configuration::get('Sendin_Optin_Url_Check', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('radio_val_option', Configuration::get('Sendin_Confirm_Type', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('temp_data', $temp_data);
+        $this->context->smarty->assign('temp_confirm', $temp_confirm);
+        $this->context->smarty->assign('prs_version', _PS_VERSION_);
+        $this->context->smarty->assign('sendin_smtp', $sendin_smtp);
+        $this->context->smarty->assign('smtp_alert', $smtp_alert);
+        $this->context->smarty->assign('Sendin_doubleoptin_redirect', Configuration::get('Sendin_doubleoptin_redirect', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('Sendin_Subscribe_Setting', Configuration::get('Sendin_Subscribe_Setting', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('Sendin_import_user_status', Configuration::get('Sendin_import_user_status', '', $this->id_shop_group, $this->id_shop));
+        $this->context->smarty->assign('form_url', Tools::safeOutput($_SERVER['REQUEST_URI']));
+        $this->context->smarty->assign('cl_version', $this->cl_version);
+        return $this->display(__FILE__, 'views/templates/admin/sendinsyncronizeblock.tpl');
     }
     
     /**
@@ -3002,6 +3129,12 @@ WHERE email = "' . pSQL($this->email) . '"');
     
     private function displaySendin()
     {
+        $resp = $this->defaultNlStatus();
+        if ($resp != 1) {
+            Configuration::updateValue('Sendin_Subscribe_Setting', 0, '', $this->id_shop_group, $this->id_shop);
+            $this->_html.= '<div class="module_error alert error">' . $this->l('You need to set up PrestaShop Newsletter module on your Prestashop back office before using it') .'</div>';
+        }
+
         $this->_html.= $this->displayBankWire();
         if ($this->checkOlderVesion() == 1) {
             $this->_html.= '<div class="module_error alert error">' . $this->l('We notified that you are using the previous version of our plugin, please uninstall it / remove it and keep only the latest version of SendinBlue') . '</div>';
@@ -3064,6 +3197,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         <input type ="hidden" name="langvalue" id="langvalue" value="' . $this->context->language->id . '">
         <input type ="hidden" name="id_shop_group" id="id_shop_group" value="' . $this->id_shop_group . '">
         <input type ="hidden" name="id_shop" id="id_shop" value="' . $this->id_shop . '">
+        <input type ="hidden" name="defaultnlmsg" id="defaultnlmsg" value="' . $this->l('You need to set up PrestaShop Newsletter module on your Prestashop back office before using it') . '">
         <input type ="hidden" name="iso_code" id="iso_code" value="' . $this->context->currency->iso_code . '">
         <input type ="hidden" name="page_no" id="page_no" value="1"><fieldset style="position:relative;" class="form-display">';
         $this->_html.= '<legend>
@@ -3106,7 +3240,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         $condition = $this->conditionalValue();
         
         return Db::getInstance()->getValue('
-        SELECT count(*) AS Total
+        SELECT count(DISTINCT email) AS Total
         FROM `' . _DB_PREFIX_ . 'customer`
         WHERE  `newsletter` = 0 ' . $condition);
     }
@@ -3118,7 +3252,7 @@ WHERE email = "' . pSQL($this->email) . '"');
     {
         $condition = $this->conditionalValue();
         return Db::getInstance()->getValue('
-        SELECT count(*) AS Total
+        SELECT count(DISTINCT email) AS Total
         FROM `' . _DB_PREFIX_ . 'customer`
         WHERE  `newsletter` = 1 ' . $condition);
     }
@@ -3256,14 +3390,12 @@ WHERE email = "' . pSQL($this->email) . '"');
             if ($register_status_sub) {
                 return;
             }
+      
             $switchQuery = false;
             switch ($register_status) {
                 // email status send to remote server
                 case -1:
-                    $switchQuery = Db::getInstance()->Execute('INSERT INTO ' . _DB_PREFIX_ . 'sendin_newsletter
-                        (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer)
-                        VALUES (\'' . pSQL($id_shop) . '\',\'' . pSQL($id_shop_group) . '\',\'' . pSQL($this->email) . '\', \'' . $s_new_timestamp . '\', \'' . pSQL(Tools::getRemoteAddr()) . '\',
-                        (SELECT c.http_referer FROM ' . _DB_PREFIX_ . 'connections c WHERE c.id_guest = ' . (int)$this->context->cookie->id_guest . ' ORDER BY c.date_add DESC LIMIT 1))');
+                    $switchQuery = Db::getInstance()->Execute('INSERT INTO ' . _DB_PREFIX_ . 'sendin_newsletter (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer) VALUES (\'' . pSQL($id_shop) . '\',\'' . pSQL($id_shop_group) . '\',\'' . pSQL($this->email) . '\', \'' . $s_new_timestamp . '\', \'' . pSQL(Tools::getRemoteAddr()) . '\',"")');
                     break;
                 // email status send to remote server
                 case 0:
@@ -3288,6 +3420,7 @@ WHERE email = "' . pSQL($this->email) . '"');
                         WHERE `email` = \'' . pSQL($this->email) . '\'' . $condition . '');
                     break;
             }
+
             if (!$switchQuery) {
                 return;
             }
@@ -3326,6 +3459,12 @@ WHERE email = "' . pSQL($this->email) . '"');
         Configuration::deleteByName('Sendin_Leftblock');
         Configuration::deleteByName('Sendin_Top');
         Configuration::deleteByName('Sendin_Footer');
+        Configuration::deleteByName('Sendin_Confirm_Type');
+        Configuration::deleteByName('Sendin_doubleoptin_redirect');
+        Configuration::deleteByName('Sendin_Optin_Url_Check');
+        Configuration::deleteByName('Sendin_final_confirm_email');
+        Configuration::deleteByName('Sendin_optin_list_id');
+        Configuration::deleteByName('Sendin_Final_Template_Id');
         
         if (Configuration::get('Sendin_Api_Smtp_Status')) {
             Configuration::updateValue('Sendin_Api_Smtp_Status', 0);
@@ -3348,6 +3487,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         Configuration::deleteByName('Sendin_Api_Smtp_Status');
         Configuration::deleteByName('Sendin_import_user_status');
         Configuration::deleteByName('Sendin_Selected_List_Data');
+        Configuration::deleteByName('Sendin_Web_Hook_Status');
         Configuration::deleteByName('SENDINBLUE_CONFIGURATION_OK');
         
         if (Configuration::get('Sendin_Newsletter_table', '', $this->id_shop_group, $this->id_shop)) {
@@ -3540,6 +3680,7 @@ WHERE email = "' . pSQL($this->email) . '"');
         $js_ddl_list = $this->local_path . $this->name . '/views/js/jquery.multiselect.min.js';
         $liveclickquery = $this->local_path . $this->name . '/views/js/jquery.livequery.min.js';
         $s_css = $this->local_path . $this->name . '/views/css/' . $this->name . '.css?_=' . time();
+        $js_ddl_list = $this->local_path . $this->name . '/views/js/jquery.multiselect.min.js';
         
         $base = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://');
         $html.= '<link rel="stylesheet" type="text/css" href="' . $base . 'ajax.googleapis.com/ajax/libs/jqueryui/1/themes/ui-lightness/jquery-ui.css" />
@@ -3616,9 +3757,8 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
                 $data['from'] = Configuration::get('Sendin_Sender_Order', '', $this->id_shop_group, $this->id_shop);
                 $data['text'] = $msgbody;
                 $data['to'] = $number;
-
                 $api_key = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
-                $mailin = new Mailin("https://api.sendinblue.com/v2.0", $api_key);
+                $mailin = new Psmailin("https://api.sendinblue.com/v2.0", $api_key);
                 $data_api = array( "email" => $this->context->customer->email);
                 $data_resp = $mailin->getUser($data_api);
                 $order_status = '';
@@ -3636,7 +3776,7 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
                 }
             }
         }
-
+        
         if (Configuration::get('Sendin_Api_Key_Status', '', $this->id_shop_group, $this->id_shop) == 1 && Configuration::get('Sendin_Tracking_Status', '', $this->id_shop_group, $this->id_shop) == 1 && $customer_result[0]['newsletter'] == 1) {
             $this->tracking = $this->trackingResult();
             $date_value = $this->getApiConfigValue();
@@ -3772,6 +3912,28 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
         $sql = 'SELECT C.id_customer, C.firstname, C.lastname, C.email, C.id_gender, C.newsletter, C.newsletter_date_add FROM ' . _DB_PREFIX_ . 'customer as C ' . $condition;
         return Db::getInstance()->ExecuteS($sql);
     }
+    public function conditionalValueOrder($id_shop_group, $id_shop)
+    {
+        $id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
+        $id_shop = !empty($id_shop) ? $id_shop : 'NULL';
+        
+        if ($id_shop === 'NULL' && $id_shop_group === 'NULL') {
+            $condition = '';
+        } elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL') {
+            $condition = 'AND id_shop_group =' . $id_shop_group;
+        } else {
+            $condition = 'AND id_shop_group =' . $id_shop_group . ' AND id_shop =' . $id_shop;
+        }
+        return $condition;
+    }
+    public function getAllCustomersofOrder($id_shop_group, $id_shop)
+    {
+        $id_shop = !empty($id_shop) ? $id_shop : 'NULL';
+        $id_shop_group = !empty($id_shop_group) ? $id_shop_group : 'NULL';
+        $condition = $this->conditionalValueOrder($id_shop_group, $id_shop);
+        $sql = 'SELECT id_customer, firstname, lastname, email FROM ' . _DB_PREFIX_ . 'customer WHERE newsletter = 1 ' . $condition;
+        return Db::getInstance()->ExecuteS($sql);
+    }
     
     /**
      * API config value from SendinBlue.
@@ -3893,15 +4055,15 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
     /**
      * Send template email by sendinblue for newsletter subscriber user  .
      */
-    public function sendWsTemplateMail($to)
+    public function sendWsTemplateMail($to, $templateid = false)
     {
         $id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
         $id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
         
         $mail_url = 'http://mysmtp.mailin.fr/ws/template/';
-        
+
         //Curl url
-        
+
         $key = Configuration::get('Sendin_Api_Key', '', $id_shop_group, $id_shop);
         if (empty($key)) {
             $id_shop = 'NULL';
@@ -3910,10 +4072,24 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
         }
         $smtp_data = Tools::jsondecode(Configuration::get('Sendin_Smtp_Result', '', $id_shop_group, $id_shop));
         $user = !empty($smtp_data->result->relay_data->data->username) ? $smtp_data->result->relay_data->data->username : '';
-        
-        $temp_id_value = Configuration::get('Sendin_Template_Id', '', $id_shop_group, $id_shop);
-        $templateid = !empty($temp_id_value) ? $temp_id_value : '';
-        
+        $Sendin_Confirm_Type = Configuration::get('Sendin_Confirm_Type', '', $id_shop_group, $id_shop);
+        if (empty($Sendin_Confirm_Type) || $Sendin_Confirm_Type == 'nocon') {
+            return false;
+        }
+        if (!$templateid) {
+            if ($Sendin_Confirm_Type == 'simplemail') {
+                $temp_id_value = Configuration::get('Sendin_Template_Id', '', $id_shop_group, $id_shop);
+                $templateid = !empty($temp_id_value) ? $temp_id_value : '';
+            }
+
+            if ($Sendin_Confirm_Type == 'doubleoptin') {
+                $path_resp = '';
+                $email_user = $this->encryptDecrypt('encrypt', $to);
+                $path_resp = $this->local_path . 'sendinblue/MailResponce.php?'.http_build_query(array('token'=> Tools::encrypt(Configuration::get('PS_SHOP_NAME')), 'resp_val'=> $email_user), null, '&');
+                return $this->defaultDoubleoptinTemp($to, $path_resp);
+            }
+        }
+
         // should be the campaign id of template created on mailin. Please remember this template should be active than only it will be sent, otherwise it will return error.
         $post_data = array();
         $post_data['to'] = $to;
@@ -3921,20 +4097,21 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
         $post_data['user'] = $user;
         $post_data['templateid'] = $templateid;
         $post_data = http_build_query($post_data);
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_URL, $mail_url);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        
+
         $return_data = curl_exec($ch);
-        
+
         curl_close($ch);
-        
+
         $res = Tools::jsondecode($return_data, true);
         return $res;
     }
-    
+
     /**
      * Get all temlpate list id by sendinblue.
      */
@@ -3970,7 +4147,93 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
     public function saveTemplateValue()
     {
         $value_template_id = Tools::getValue('template');
+        $subscribe_confirm_type = Tools::getValue('subscribe_confirm_type');
+        $optin_redirect_url_check = Tools::getValue('optin_redirect_url_check');
+        $doubleoptin_redirect_url = Tools::getValue('doubleoptin-redirect-url');
+        $final_confirm_email = Tools::getValue('final_confirm_email');
+        $final_temp_id = Tools::getValue('template_final');
+
+        
         Configuration::updateValue('Sendin_Template_Id', $value_template_id, '', $this->id_shop_group, $this->id_shop);
+
+        Configuration::updateValue('Sendin_Optin_Url_Check', $optin_redirect_url_check, '', $this->id_shop_group, $this->id_shop);
+
+        Configuration::updateValue('Sendin_doubleoptin_redirect', $doubleoptin_redirect_url, '', $this->id_shop_group, $this->id_shop);
+        
+        Configuration::updateValue('Sendin_final_confirm_email', $final_confirm_email, '', $this->id_shop_group, $this->id_shop);
+        if (!empty($final_temp_id)) {
+            Configuration::updateValue('Sendin_Final_Template_Id', $final_temp_id, '', $this->id_shop_group, $this->id_shop);
+        }
+        if (!empty($subscribe_confirm_type)) {
+            Configuration::updateValue('Sendin_Confirm_Type', $subscribe_confirm_type, '', $this->id_shop_group, $this->id_shop);
+            if ($subscribe_confirm_type == 'doubleoptin') {
+                $res_optin = $this->checkFolderListDoubleoptin();
+                if (!empty($res_optin['optin_id'])) {
+                    Configuration::updateValue('Sendin_optin_list_id', $res_optin['optin_id'], '', $this->id_shop_group, $this->id_shop);
+                }
+
+                if ($res_optin === false) {
+                    $api_key = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
+                    $data = array();
+                    $data['key'] = $api_key;
+                    $data['webaction'] = 'ADDFOLDER';
+                    $data['foldername'] = 'FORM';
+                    $res = $this->curlRequest($data);
+                    $res = Tools::jsonDecode($res);
+                    $folder_id = $res->folder_id;
+
+                    $param = array();
+                    $param['key'] = $api_key;
+                    $param['listname'] = 'Temp - DOUBLE OPTIN';
+                    $param['webaction'] = 'NEWLIST';
+                    $param['list_parent'] = $folder_id;
+
+                    //folder id
+                    $list_response = $this->curlRequest($param);
+                    $res_id = Tools::jsonDecode($list_response);
+                    $list_id = $res_id->result;
+                    Configuration::updateValue('Sendin_optin_list_id', $list_id, '', $this->id_shop_group, $this->id_shop);
+                }
+            }
+        }
+    }
+    public function checkFolderListDoubleoptin()
+    {
+        $data = array();
+        $data['key'] = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
+        $data['webaction'] = 'DISPLAY-FOLDERS-LISTS';
+        
+        if ($data['key'] == '') {
+            return false;
+        }
+        
+        $data['ids'] = '';
+        
+        //folder id
+        $s_array = array();
+        $list_response = $this->curlRequest($data);
+        $res = Tools::jsonDecode($list_response, true);
+        $return = false;
+        if (!empty($res)) {
+            foreach ($res as $value) {
+                if (Tools::strtolower($value['name']) == 'form') {
+                    
+                    if (!empty($value['lists'])) {
+                        foreach ($value['lists'] as $key => $val) {
+                            if ($val['name'] == 'Temp - DOUBLE OPTIN') {
+                                $s_array['optin_id'] = $key;
+                            }
+                        }
+                    }
+                }
+            }
+            if (count($s_array) > 0) {
+                $return = $s_array;
+            } else {
+                $return = false;
+            }
+        }
+        return $return;
     }
     
     /**
@@ -4001,7 +4264,7 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
         
         if ($id_shop === 'NULL' && $id_shop_group === 'NULL') {
             $condition = '';
-        } elseif ($id_shop_group != 'NULL' && $id_shop === 'NULL') {
+        } elseif ($id_shop_group !== 'NULL' && $id_shop === 'NULL') {
             $condition = 'AND id_shop_group =' . $id_shop_group;
         } else {
             $condition = 'AND id_shop_group =' . $id_shop_group . ' AND id_shop =' . $id_shop;
@@ -4035,5 +4298,103 @@ WHERE               `id_country` = \'' . pSQL($address_delivery[0]['id_country']
         }
         
         return $condition;
+    }
+
+    /**
+    * check Default newsletter status enable or not
+    */
+    public function defaultNlStatus()
+    {
+        $module_name = 'blocknewsletter';
+        $data = Module::isInstalled($module_name);
+        if ($data === false) {
+            $data_resp = Module::getInstanceByName('blocknewsletter');
+            if (!empty($data_resp)) {
+                $data_resp->install();
+            }
+        }
+
+        if (_PS_VERSION_ <= '1.4.1.0') {
+            Db::getInstance()->Execute('UPDATE `'._DB_PREFIX_.'module` SET active = 1 WHERE name = "blocknewsletter"');
+        } else {
+            $block_resp = Module::getInstanceByName('blocknewsletter');
+            if (!empty($block_resp)) {
+                $block_resp->enable();
+            }
+        }
+
+        $data_final = Module::isInstalled($module_name);
+        if ($data_final === true) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+    * send double optin template and manage.
+    */
+    public function defaultDoubleoptinTemp($subscriber_email, $doubleoptin_url)
+    {
+        $id_shop = !empty($this->id_shop) ? $this->id_shop : 'NULL';
+        $id_shop_group = !empty($this->id_shop_group) ? $this->id_shop_group : 'NULL';
+        $id_lang = $this->langid;
+        $title = $this->l('Please confirm your subscription');
+        $smtp_result = Tools::jsonDecode(Configuration::get('Sendin_Smtp_Result', '', $id_shop_group, $id_shop));
+        if ($id_shop_group = 'NULL' && $id_shop === 'NULL' && empty($smtp_result)) {
+            $id_shop_group = 1;
+            $id_shop = 1;
+            $smtp_result = Tools::jsonDecode(Configuration::get('Sendin_Smtp_Result', '', $id_shop_group, $id_shop));
+        }
+        $country_iso = Db::getInstance()->getRow('SELECT `iso_code` FROM ' . _DB_PREFIX_ . 'lang WHERE  `id_lang` = \'' . pSQL($this->langid) . '\'');
+        $iso_code = Tools::strtolower($country_iso['iso_code']);
+        if (is_dir(dirname(__FILE__) . '/mails/' . $iso_code) != true) {
+            $result = Db::getInstance()->getRow('SELECT `id_lang` FROM ' . _DB_PREFIX_ . 'lang WHERE `iso_code` = \'en\'');
+            $id_lang = $result['id_lang'];
+        }
+        $site_name = Configuration::get('PS_SHOP_NAME');
+        $toname = explode('@', $subscriber_email);
+        $toname = preg_replace('/[^a-zA-Z0-9]+/', ' ', $toname[0]);
+
+        return Mail::Send((int)$id_lang, 'doubleoptin_temp', Mail::l($title, (int)$id_lang), array('{double_optin}' => $doubleoptin_url, '{site_name}' => $site_name), $subscriber_email, $toname, $this->l('contact@sendinblue.com'), $this->l('SendinBlue'), null, null, dirname(__FILE__) . '/mails/');
+    }
+
+    /**
+    * encript/decript string function.
+    */
+    public function encryptDecrypt($action, $string)
+    {
+        $output = false;
+        $encrypt_method = "AES-256-CBC";
+        $secret_key = 'sendinblue';
+        $secret_iv = 'sendinblue';
+
+        // hash
+        $key = hash('sha256', $secret_key);
+
+        // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
+        $iv = Tools::substr(hash('sha256', $secret_iv), 0, 16);
+
+        if ($action == 'encrypt') {
+            $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
+        } elseif ($action == 'decrypt') {
+            $output = openssl_decrypt($string, $encrypt_method, $key, 0, $iv);
+        }
+
+        return $output;
+    }
+     /**
+    * create new web hookurl for unsubscribe responce.
+    */
+    public function createPsWebHook()
+    {
+        $web_hook = $this->local_path . 'sendinblue/sendinWebHook.php?token=' . Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
+        $api_key = Configuration::get('Sendin_Api_Key', '', $this->id_shop_group, $this->id_shop);
+        $mailin = new Psmailin("https://api.sendinblue.com/v2.0", $api_key);
+        $data_api = array( "url" => $web_hook,
+            "description" => "prestashopWebHook",
+            "events" => array( "unsubscribe", "spam", "hard_bounce"),
+            "is_plat" => 1);
+        return $mailin->createWebhook($data_api);
     }
 }
