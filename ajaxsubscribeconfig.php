@@ -37,7 +37,7 @@ $sendin = new Sendinblue();
 $resp = $sendin->defaultNlStatus();
 
 if ($resp == 1) {
-	$manage_subs_val = Tools::getValue('managesubscribe');
+    $manage_subs_val = Tools::getValue('managesubscribe');
     Configuration::updateValue('Sendin_Subscribe_Setting', $manage_subs_val, '', $id_shop_group, $id_shop);
     echo 'done';
 } else {

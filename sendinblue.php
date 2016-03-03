@@ -72,11 +72,7 @@ class Sendinblue extends Module
     public function __construct()
     {
         $this->name = 'sendinblue';
-        if (version_compare(_PS_VERSION_, '1.5', '>')) {
-            $this->tab = 'emailing';
-        } else {
-            $this->tab = 'advertising_marketing';
-        }
+        $this->tab = 'advertising_marketing';
         $this->author = 'SendinBlue';
         $this->version = '2.5.5';
         
